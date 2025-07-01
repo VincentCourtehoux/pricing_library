@@ -41,4 +41,3 @@ def test_lsm_implied_vol():
 
 if __name__ == "__main__":
     pytest.main(["tests/test_lsm_vol.py"])
-    test_lsm_implied_vol()
