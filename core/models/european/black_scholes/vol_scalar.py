@@ -1,5 +1,5 @@
 import numpy as np
-from pricing_scalar import BlackScholesScalar
+from core.models.european.black_scholes.pricing_scalar import BlackScholesScalar
 
 bs = BlackScholesScalar()
 

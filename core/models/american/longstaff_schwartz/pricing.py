@@ -1,79 +1,70 @@
 import numpy as np
 import sys
 import os
-from numpy.polynomial.laguerre import lagval
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 
-from models.utils.path_simulation import simulate_gbm
+from core.models.utils.gbm_simulation import simulate_gbm
+from models.utils.payoff import compute_payoff
+from models.utils.laguerre_matrix import laguerre_matrix
 
-def payoff(S, K, option_type):
-    if option_type == 'call':
-        return np.maximum(S - K, 0)
-    elif option_type == 'put':
-        return np.maximum(K - S, 0)
-    else:
-        raise ValueError("option_type must be 'call' or 'put'")
-    
-def laguerre_matrix(x, degree):
-    # x : vecteur 1D
-    # Retourne une matrice (len(x), degree+1) où col i = L_i(x)
-    # numpy polynômes laguerre attend les coefficients, on fait un for pour chaque degré
-    mat = np.zeros((len(x), degree+1))
-    for i in range(degree+1):
-        c = np.zeros(i+1)
-        c[-1] = 1  # coefficient 1 pour le terme L_i
-        mat[:, i] = lagval(x, c)
-    return mat
 
 def longstaff_schwartz_american(S0, K, r, sigma, T, q, N, nb_paths, option_type='call', degree=2, seed=None):
     """
-    Prix d'une option américaine avec dividendes via Longstaff-Schwartz
-    
-    option_type: 'call' ou 'put'
+    Prices an American option using the Longstaff-Schwartz Monte Carlo method.
+
+    Parameters:
+    - S0 (float): Initial asset price
+    - K (float): Strike price
+    - r (float): Risk-free interest rate
+    - sigma (float): Volatility
+    - T (float): Time to maturity (in years)
+    - q (float): Dividend yield
+    - N (int): Number of time steps
+    - nb_paths (int): Number of Monte Carlo simulation paths
+    - option_type (str): 'call' or 'put'
+    - degree (int): Degree of Laguerre polynomials used in regression
+    - seed (int or None): Random seed for reproducibility
+
+    Returns:
+    - float: Estimated price of the American option at time 0
     """
     dt = T / N
     discount = np.exp(-r * dt)
     
     S = simulate_gbm(S0, r, sigma, T, q, N, nb_paths, seed)
     
-    CF = payoff(S[-1], K, option_type)
+    CF = compute_payoff(S[-1], K, option_type)
     
     for t in range(N-1, 0, -1):
-        itm = payoff(S[t], K, option_type) > 0
-        S_itm = S[t, itm]
-        CF_itm = CF[itm] * discount
-        
-        if len(S_itm) == 0:
-            CF = CF * discount
-            continue
-        
-        X = laguerre_matrix(S_itm, degree)
-        coeffs = np.linalg.lstsq(X, CF_itm, rcond=None)[0]
-        continuation_value = X @ coeffs
-        
-        exercise_value = payoff(S_itm, K, option_type)
-        exercise = exercise_value > continuation_value
-        
-        CF[itm] = np.where(exercise, exercise_value, CF_itm)
         CF = CF * discount
+        
+        exercise_value = compute_payoff(S[t], K, option_type)
+        itm = exercise_value > 0
+        
+        if np.sum(itm) == 0:
+            continue
+            
+        S_itm = S[t, itm]
+        CF_itm = CF[itm]
+        exercise_value_itm = exercise_value[itm]
+        
+        if len(S_itm) > degree + 1: 
+            X = laguerre_matrix(S_itm, degree)
+            try:
+                coeffs = np.linalg.lstsq(X, CF_itm, rcond=None)[0]
+                continuation_value = X @ coeffs
+            except np.linalg.LinAlgError:
+                continuation_value = CF_itm
+        else:
+            continuation_value = np.full(len(S_itm), np.mean(CF_itm))
+        
+        exercise = exercise_value_itm > continuation_value
+        
+        CF[itm] = np.where(exercise, exercise_value_itm, CF_itm)
+    
+    CF = CF * discount
     
     price = np.mean(CF)
     return price
-
-if __name__ == "__main__":
-    S0 = 13.5
-    K = 13
-    r = 0.0213
-    sigma = 0.427
-    T = 3
-    q = 0.012
-    N = 200
-    nb_paths = 100000
-
-    prix_call = longstaff_schwartz_american(S0, K, r, sigma, T, q, N, nb_paths, option_type='call')
-    prix_put = longstaff_schwartz_american(S0, K, r, sigma, T, q, N, nb_paths, option_type='put')
-
-    print(f"Prix Call Américain (dividendes) : {prix_call:.4f}")
-    print(f"Prix Put Américain (dividendes)  : {prix_put:.4f}")
     

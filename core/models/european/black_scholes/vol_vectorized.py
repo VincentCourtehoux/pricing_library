@@ -1,5 +1,5 @@
 import numpy as np
-from pricing_vectorized import BlackScholesVectorized
+from core.models.european.black_scholes.pricing_vectorized import BlackScholesVectorized
 
 bs = BlackScholesVectorized()
 

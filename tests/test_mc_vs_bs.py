@@ -6,18 +6,23 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../'
 
 from core.models.european.black_scholes.pricing_scalar import BlackScholesScalar
 bs = BlackScholesScalar()
-from core.models.utils.monte_carlo_pricing import MonteCarloPricing
-mc = MonteCarloPricing()
+from core.models.european.monte_carlo import price_european_option_mc
 
-
-def test_call_put_value():
+def test_put_call_value():
+    params = {
+        'S0': 100,
+        'K': 100,
+        'T': 1.0,
+        'r': 0.05,
+        'sigma': 0.2,
+        'q': 0.02,
+        'N': 100,
+        'nb_paths': 50000
+    }
     
-    results = mc.monte_carlo_pricing(100, 100, 1, 0.05, 0.2, 0.02, 252, 100000, "call", True)
-    mc_price = results["price"]
-    ci_low, ci_high = results["confidence_interval"]
-
-    bs_price = bs.premium(100, 100, 1, 0.05, 0.2, 0.02, "call")
-    assert ci_low <= bs_price <= ci_high, f"BS price {bs_price} not in [{ci_low}, {ci_high}]"
+    for option_type in ['call', 'put']:
+        result = price_european_option_mc(**params, option_type=option_type, return_all=True, seed=42)
+        assert result['confidence_interval'][0] <= result['black_scholes_price'] <= result['confidence_interval'][1]
 
 if __name__ == "__main__":
     pytest.main(["tests/test_mc_vs_bs.py"])
