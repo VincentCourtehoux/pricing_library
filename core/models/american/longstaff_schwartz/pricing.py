@@ -4,7 +4,7 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 
-from core.models.utils.gbm_simulation import simulate_gbm
+from models.utils.gbm_simulation import simulate_gbm
 from models.utils.payoff import compute_payoff
 from models.utils.laguerre_matrix import laguerre_matrix
 

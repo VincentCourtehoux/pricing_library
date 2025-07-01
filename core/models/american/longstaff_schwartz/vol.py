@@ -1,67 +1,206 @@
-from scipy.optimize import brentq
+import numpy as np
+from scipy.optimize import brentq, minimize_scalar
+import time
+import os
+import sys
 
-from pricing import lsm
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../../')))
+from core.models.american.longstaff_schwartz.pricing import longstaff_schwartz_american
 
-def vega_numerical(S, K, T, r, sigma, q=0.0, option_type="call", N=252, nb_paths=100, h=0.1):
+class AmericanImpliedVolSolver:
     """
-    Compute the numerical Vega of an option priced by Longstaff-Schwartz.
-
-    Parameters:
-    S (float): initial underlying asset price
-    K (float): strike price
-    T (float): time to maturity (in years)
-    r (float): risk-free interest rate
-    sigma (float): volatility used for pricing
-    q (float): continuous dividend yield (default 0.0)
-    option_type (str): "call" or "put" (default "call")
-    N (int): number of time steps (default 252)
-    nb_paths (int): number of Monte Carlo paths (default 100)
-    h (float): finite difference step size for numerical derivative (default 0.1)
-
-    Returns:
-    float: numerical estimate of Vega (sensitivity of option price to volatility)
+    Implied volatility solver for American options using Longstaff-Schwartz pricing.
     """
-    price_up = lsm(S, K, T, r, sigma + h, q, N, nb_paths, option_type)
-    price_down = lsm(S, K, T, r, sigma - h, q, N, nb_paths, option_type)
-    return (price_up - price_down) / (2 * h)
+    
+    def __init__(self, S0, K, T, r, q, option_type, market_price,
+                 N=50, nb_paths=50000, degree=2, seed=42):
+        """
+        Initialize the solver with option parameters and market price.
 
-def implied_vol_lsm(market_price, S0, K, T, r, q=0.0, option_type="call", N=252, nb_paths=100, vol_bounds=(1e-6, 3.0), tol=1e-4, max_iter=20):
-    """
-    Calculate the implied volatility of an American option using Longstaff-Schwartz.
+        Parameters:
+        S0 (float): Spot price of the underlying asset.
+        K (float): Strike price.
+        T (float): Time to maturity (in years).
+        r (float): Risk-free interest rate.
+        q (float): Continuous dividend yield.
+        option_type (str): 'call' or 'put'.
+        market_price (float): Observed market price of the option.
+        N (int): Number of time steps for the Monte Carlo simulation.
+        nb_paths (int): Number of Monte Carlo simulation paths.
+        degree (int): Degree of Laguerre polynomials for regression.
+        seed (int): Random seed for reproducibility.
+        """
+        self.S0 = S0
+        self.K = K
+        self.T = T
+        self.r = r
+        self.q = q
+        self.option_type = option_type
+        self.market_price = market_price
+        self.N = N
+        self.nb_paths = nb_paths
+        self.degree = degree
+        self.seed = seed
+        
+        self.n_evaluations = 0
+        self.evaluation_times = []
+        
+    def price_function(self, sigma):
+        """
+        Compute the difference between theoretical option price (via LSM) and market price.
 
-    Parameters:
-    market_price (float): observed market price
-    S0 (float): initial underlying asset price
-    K (float): strike price
-    T (float): maturity (in years)
-    r (float): risk-free interest rate
-    q (float): continuous dividend yield
-    option_type (str): "call" or "put"
-    N (int): number of time steps (default 252)
-    nb_paths (int): number of Monte Carlo paths (default 100)
-    vol_bounds (tuple): bounds for the volatility search
-    tol (float): tolerance for stopping criterion on price
-    max_iter (int): maximum number of Newton iterations
+        Parameters:
+        sigma (float): Volatility to evaluate.
 
-    Returns:
-    float: estimated implied volatility
-    """
-    def objective(sigma):
-        return lsm(S0, K, T, r, sigma, q, N, nb_paths, option_type) - market_price
+        Returns:
+        float: Theoretical price minus market price.
+        """
+        start_time = time.time()
+        
+        try:
+            theoretical_price = longstaff_schwartz_american(
+                self.S0, self.K, self.r, sigma, self.T, self.q,
+                self.N, self.nb_paths, self.option_type, self.degree, self.seed
+            )
+            
+            self.n_evaluations += 1
+            self.evaluation_times.append(time.time() - start_time)
+            
+            return theoretical_price - self.market_price
+            
+        except Exception as e:
+            return float('inf')
+    
+    def objective_function(self, sigma):
+        """
+        Objective function for minimization: squared difference between theoretical and market price.
 
-    sigma_est = brentq(objective, *vol_bounds, xtol=tol)
+        Parameters:
+        sigma (float): Volatility to evaluate.
 
-    for i in range(max_iter):
-        price = lsm(S0, K, T, r, sigma_est, q, N, nb_paths, option_type)
-        diff = price - market_price
-        if abs(diff) < tol:
-            break
-        vega = vega_numerical(S0, K, T, r, sigma_est, q, option_type, N, nb_paths)
-        if vega == 0:
-            break
-        sigma_est -= diff / vega
+        Returns:
+        float: Squared error.
+        """
+        return self.price_function(sigma)**2
+    
+    def solve_brentq(self, vol_min=0.01, vol_max=3.0, tolerance=1e-6, max_iter=100):
+        """
+        Find implied volatility by root-finding using Brent’s method.
 
-        sigma_est = max(vol_bounds[0], min(vol_bounds[1], sigma_est))
-    return sigma_est
+        Parameters:
+        vol_min (float): Minimum volatility bound.
+        vol_max (float): Maximum volatility bound.
+        tolerance (float): Convergence tolerance.
+        max_iter (int): Maximum iterations allowed.
 
-print(implied_vol_lsm(4.4765, 36, 40, 1, 0.06, 0, "put", 252, 10000))
+        Returns:
+        dict: Result including implied volatility, success flag, number of evaluations, and timing.
+        """        
+        try:
+            f_min = self.price_function(vol_min)
+            f_max = self.price_function(vol_max)
+            
+            if f_min * f_max > 0:
+                raise ValueError(f"No sign change detected in interval [{vol_min}, {vol_max}]")
+
+            start_time = time.time()
+            implied_vol = brentq(
+                self.price_function, vol_min, vol_max,
+                xtol=tolerance, maxiter=max_iter
+            )
+            solve_time = time.time() - start_time
+            
+            return {
+                'implied_vol': implied_vol,
+                'method': 'Brent',
+                'success': True,
+                'n_evaluations': self.n_evaluations,
+                'solve_time': solve_time,
+                'final_error': abs(self.price_function(implied_vol)),
+                'avg_evaluation_time': np.mean(self.evaluation_times)
+            }
+            
+        except Exception as e:
+            return {
+                'implied_vol': None,
+                'method': 'Brent',
+                'success': False,
+                'error': str(e),
+                'n_evaluations': self.n_evaluations
+            }
+    
+    def solve_minimize(self, vol_bounds=(0.01, 3.0), tolerance=1e-6):
+        """
+        Find implied volatility by minimizing the squared error function using bounded scalar minimization.
+
+        Parameters:
+        vol_bounds (tuple): Bounds for volatility search.
+        tolerance (float): Convergence tolerance.
+
+        Returns:
+        dict: Result including implied volatility, success flag, number of evaluations, and timing.
+        """        
+        try:
+            start_time = time.time()
+            
+            result = minimize_scalar(
+                self.objective_function,
+                bounds=vol_bounds,
+                method='bounded',
+                options={'xatol': tolerance}
+            )
+            
+            solve_time = time.time() - start_time
+            
+            return {
+                'implied_vol': result.x,
+                'method': 'Minimize',
+                'success': result.success,
+                'n_evaluations': self.n_evaluations,
+                'solve_time': solve_time,
+                'final_error': np.sqrt(result.fun),
+                'avg_evaluation_time': np.mean(self.evaluation_times),
+                'scipy_result': result
+            }
+            
+        except Exception as e:
+            return {
+                'implied_vol': None,
+                'method': 'Minimize',
+                'success': False,
+                'error': str(e),
+                'n_evaluations': self.n_evaluations
+            }
+    
+    def solve_adaptive(self, initial_bounds=(0.01, 3.0), tolerance=1e-6):
+        """
+        Adaptive solver trying Brent’s method first, then falling back to minimization if Brent fails.
+
+        Parameters:
+        initial_bounds (tuple): Initial volatility bounds for the search.
+        tolerance (float): Convergence tolerance.
+
+        Returns:
+        dict: Result including implied volatility, success flag, number of evaluations, and timing.
+        """
+        self.n_evaluations = 0
+        self.evaluation_times = []
+
+        result_brent = self.solve_brentq(
+            initial_bounds[0], initial_bounds[1], tolerance
+        )
+        
+        if result_brent['success']:
+            return result_brent
+
+        print("Brent method failed, trying minimization...")
+        self.n_evaluations = 0
+        self.evaluation_times = []
+
+        result_minimize = self.solve_minimize(initial_bounds, tolerance)
+        
+        if result_minimize['success']:
+            return result_minimize
+        else:
+            print("All methods failed")
+            return result_minimize
