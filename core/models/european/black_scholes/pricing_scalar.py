@@ -203,5 +203,14 @@ class BlackScholesScalar:
     
 if __name__ == "__main__":
     model = BlackScholesScalar()
-    print(model.premium(100,100,1,0.05,0.3,0.02))
-    print(model.vega(150,100,1,0.05,0.3,0.02))
+
+    S0 = 13.5
+    K = 13
+    r = 0.0213
+    sigma = 0.427
+    T = 3
+    q = 0.012
+    N = 200
+    nb_paths = 100000
+    print(model.premium(S0, K, T, r, sigma, q, "call"))
+    print(model.premium(S0, K, T, r, sigma, q, "put"))
