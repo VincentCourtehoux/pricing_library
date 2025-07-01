@@ -202,15 +202,18 @@ class BlackScholesScalar:
             return -K * T * np.exp(-r * T) * norm.cdf(-d2)
     
 if __name__ == "__main__":
-    model = BlackScholesScalar()
+    bs = BlackScholesScalar()
+    S0 = 100
+    K = 100
+    T = 1.0
+    r = 0.05
+    sigma = 0.2
+    q = 0.0
+    barrier = 90
+    N = 252
+    nb_paths = 1000000
+    option_type = "put"
+    barrier_type = "down-out"
 
-    S0 = 13.5
-    K = 13
-    r = 0.0213
-    sigma = 0.427
-    T = 3
-    q = 0.012
-    N = 200
-    nb_paths = 100000
-    print(model.premium(S0, K, T, r, sigma, q, "call"))
-    print(model.premium(S0, K, T, r, sigma, q, "put"))
+    price = bs.premium(S0, K, T, r, sigma, q, option_type)
+    print(price)
