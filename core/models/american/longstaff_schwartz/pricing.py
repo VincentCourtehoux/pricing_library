@@ -72,9 +72,5 @@ def longstaff_schwartz_american(S0, K, r, sigma, T, q, N, nb_paths, option_type=
         CF[itm] = np.where(exercise_decision, exercise_value_itm, CF_itm)
     CF = CF * discount
     price = np.mean(CF)
-    std_error = np.std(CF) / np.sqrt(nb_paths)
     
-    return {
-        'price': price,
-        'std_error': std_error,
-    }
+    return price

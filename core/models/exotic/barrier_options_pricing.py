@@ -29,7 +29,7 @@ def is_barrier_valid(paths, barrier, barrier_type):
     else:
         raise ValueError("Invalid barrier_type")
       
-def barrier_option_premium(S0, K, T, r, sigma, q, barrier, N, nb_paths, option_type, barrier_type):
+def barrier_option_premium(S0, K, T, r, sigma, q, barrier, N, nb_paths, option_type, barrier_type, seed=None):
     """
     Compute the price of a barrier option using Monte Carlo simulation.
 
@@ -45,10 +45,13 @@ def barrier_option_premium(S0, K, T, r, sigma, q, barrier, N, nb_paths, option_t
     nb_paths (int): Number of Monte Carlo simulation paths
     option_type (str): Option type, "call" or "put"
     barrier_type (str): Barrier type, one of "up-in", "up-out", "down-in", "down-out"
+    seed (int or None): Random seed for reproducibility
 
     Returns:
     float: Estimated price (premium) of the barrier option
     """
+    if seed is not None:
+        np.random.seed(seed)
     paths = simulate_gbm(S0, T, r, sigma, q, N, nb_paths)
     payoffs = compute_payoff(paths[:, -1], K, option_type)
     valid = is_barrier_valid(paths, barrier, barrier_type)

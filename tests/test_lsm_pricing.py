@@ -31,7 +31,7 @@ def test_american_vs_european():
     }
 
     for option_type in ['call', 'put']:
-        american_price = longstaff_schwartz_american(**params, option_type=option_type)['price']
+        american_price = longstaff_schwartz_american(**params, option_type=option_type)
         european_price = bs.premium(**params2, option_type=option_type)
 
         tolerance = 1e-2
