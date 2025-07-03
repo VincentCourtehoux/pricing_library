@@ -4,7 +4,7 @@ import os
 import pytest 
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from core.models.american.binomial_tree import BinomialTreeAmerican
+from core.models.vanilla.american.binomial_tree import BinomialTreeAmerican
 
 def test_american_call_price():
     

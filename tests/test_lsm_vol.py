@@ -5,8 +5,8 @@ import numpy as np
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from core.models.american.longstaff_schwartz.pricing import longstaff_schwartz_american
-from core.models.american.longstaff_schwartz.vol import AmericanImpliedVolSolver
+from core.models.vanilla.american.longstaff_schwartz.pricing import longstaff_schwartz_american
+from core.models.vanilla.american.longstaff_schwartz.vol import AmericanImpliedVolSolver
 
 def test_lsm_implied_vol():
 

@@ -293,17 +293,17 @@ if active_model:
     if st.button("Calculate Option Price", type="primary", use_container_width=True):
         try:
             if option_style == "European" and pricing_model == "Black-Scholes":
-                from core.models.european.black_scholes.pricing_scalar import BlackScholesScalar
+                from core.models.vanilla.european.black_scholes.pricing_scalar import BlackScholesScalar
                 bs = BlackScholesScalar()
                 price = bs.premium(S, K, T, r, sigma, q, option_type)
             elif option_style == "European" and pricing_model == "Monte Carlo":
-                from core.models.european.monte_carlo import price_european_option_mc
+                from core.models.vanilla.european.monte_carlo import price_european_option_mc
                 price = price_european_option_mc(S, K, T, r, sigma, q, N, nb_paths, option_type, seed=44)
             elif option_style == "American" and pricing_model == "Longstaff-Schwartz":
-                from core.models.american.longstaff_schwartz.pricing import longstaff_schwartz_american
+                from core.models.vanilla.american.longstaff_schwartz.pricing import longstaff_schwartz_american
                 price = longstaff_schwartz_american(S, K, r, sigma, T, q, N, nb_paths, option_type, degree=2, seed=42)
             elif option_style == "American" and pricing_model == "Binomial Tree":
-                from core.models.american.binomial_tree import BinomialTreeAmerican
+                from core.models.vanilla.american.binomial_tree import BinomialTreeAmerican
                 bt = BinomialTreeAmerican(S, K, T, r, sigma, N, option_type)
                 price = bt.price_option()
             elif option_style == "Barrier":

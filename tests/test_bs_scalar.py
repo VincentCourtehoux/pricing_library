@@ -4,7 +4,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from core.models.european.black_scholes.pricing_scalar import BlackScholesScalar
+from core.models.vanilla.european.black_scholes.pricing_scalar import BlackScholesScalar
 bs = BlackScholesScalar()
 
 def test_premium_call_put_known_value():

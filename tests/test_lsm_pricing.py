@@ -4,8 +4,8 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from core.models.american.longstaff_schwartz.pricing import longstaff_schwartz_american
-from core.models.european.black_scholes.pricing_scalar import BlackScholesScalar
+from core.models.vanilla.american.longstaff_schwartz.pricing import longstaff_schwartz_american
+from core.models.vanilla.european.black_scholes.pricing_scalar import BlackScholesScalar
 bs = BlackScholesScalar()
 
 def test_american_vs_european():

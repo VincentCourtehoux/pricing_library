@@ -4,9 +4,9 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from core.models.european.black_scholes.pricing_scalar import BlackScholesScalar
+from core.models.vanilla.european.black_scholes.pricing_scalar import BlackScholesScalar
 bs = BlackScholesScalar()
-from core.models.european.monte_carlo import price_european_option_mc
+from core.models.vanilla.european.monte_carlo import price_european_option_mc
 
 def test_put_call_value():
     params = {
