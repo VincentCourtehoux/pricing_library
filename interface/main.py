@@ -199,7 +199,7 @@ if active_model:
         )
     
     if option_style == "Barrier":
-        barrier_col1, barrier_col2 = st.columns(2)
+        barrier_col1, barrier_col2, barrier_col3 = st.columns(3)
         with barrier_col1:
             barrier_type = st.selectbox(
                 "Barrier Type",
@@ -214,7 +214,14 @@ if active_model:
                 step=5.0,
                 help="Barrier price level"
             )
-    
+        with barrier_col3:
+            rebate = st.number_input(
+                "Rebate Amount", 
+                min_value=0.0, 
+                value=0.0, 
+                step=1.0,
+                help="Rebate amount if barrier is breached"
+            )
     st.subheader("📈 Market Data")
     
     market_col1, market_col2, market_col3 = st.columns(3)
@@ -311,7 +318,7 @@ if active_model:
                 price = mc_barrier_premium(S, K, T, r, sigma, q, barrier, N, nb_paths, option_type, barrier_type, seed=42)
             elif option_style == "Barrier" and pricing_model == "Black Scholes":
                 from core.models.exotic.barrier.bs_barrier_pricing import bs_barrier_premium
-                price = bs_barrier_premium(S, K, T, r, sigma, q, barrier, option_type, barrier_type)
+                price = bs_barrier_premium(S, K, T, r, sigma, q, barrier, option_type, barrier_type, rebate)               
             
             st.success(f"**{option_type.capitalize()} Option Price ({pricing_model}): ${price:.4f}**")
             
@@ -398,9 +405,7 @@ if active_model:
             """)
 
 else:
-    #st.markdown('<div class="parameter-section">', unsafe_allow_html=True)
     st.info("👈 Please select a pricing model from the sidebar to configure parameters")
-    #st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("---")
 st.markdown("© 2025 - Développé par Vincent Courtehoux avec [Streamlit](https://streamlit.io/)")
