@@ -133,7 +133,7 @@ with st.sidebar:
     st.markdown("**Barrier**")
     barrier_models = st.radio(
         "",
-        ["Monte Carlo"],
+        ["Black Scholes", "Monte Carlo"],
         key="barrier_radio",
         index=None,
         label_visibility="collapsed",
@@ -306,9 +306,12 @@ if active_model:
                 from core.models.vanilla.american.binomial_tree import BinomialTreeAmerican
                 bt = BinomialTreeAmerican(S, K, T, r, sigma, N, option_type)
                 price = bt.price_option()
-            elif option_style == "Barrier":
-                from core.models.exotic.barrier_options_pricing import barrier_option_premium
-                price = barrier_option_premium(S, K, T, r, sigma, q, barrier, N, nb_paths, option_type, barrier_type, seed=42)
+            elif option_style == "Barrier" and pricing_model == "Monte Carlo":
+                from core.models.exotic.barrier.monte_carlo_pricing import mc_barrier_premium
+                price = mc_barrier_premium(S, K, T, r, sigma, q, barrier, N, nb_paths, option_type, barrier_type, seed=42)
+            elif option_style == "Barrier" and pricing_model == "Black Scholes":
+                from core.models.exotic.barrier.bs_barrier_pricing import bs_barrier_premium
+                price = bs_barrier_premium(S, K, T, r, sigma, q, barrier, option_type, barrier_type)
             
             st.success(f"**{option_type.capitalize()} Option Price ({pricing_model}): ${price:.4f}**")
             
