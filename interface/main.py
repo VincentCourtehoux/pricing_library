@@ -336,7 +336,14 @@ if active_model:
                 st.metric("Moneyness", f"{moneyness:.3f}", money_status)
             
             with met_col2:
-                intrinsic_value = max(0, S - K) if option_type == "call" else max(0, K - S)
+                if option_style == "Barrier":
+                    if barrier_type in ["up-in", "down-in"] and (S > barrier if barrier_type == "down-in" else S < barrier):
+                        intrinsic_value = 0
+                    elif barrier_type in ["up-out", "down-out"] and (S < barrier if barrier_type == "down-out" else S > barrier):
+                        intrinsic_value = 0
+                    else: intrinsic_value = max(0, S - K) if option_type == "call" else max(0, K - S)
+                else : 
+                    intrinsic_value = max(0, S - K) if option_type == "call" else max(0, K - S)
                 st.metric("Intrinsic Value", f"${intrinsic_value:.4f}")
             
             with met_col3:
