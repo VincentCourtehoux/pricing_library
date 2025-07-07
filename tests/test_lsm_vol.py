@@ -5,8 +5,8 @@ import numpy as np
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from core.models.vanilla.american.longstaff_schwartz.pricing import longstaff_schwartz_american
-from core.models.vanilla.american.longstaff_schwartz.vol import AmericanImpliedVolSolver
+from core.models.vanilla_options.american_options.longstaff_schwartz.pricing import lsm_us_premium
+from core.models.vanilla_options.american_options.longstaff_schwartz.vol import AmericanImpliedVolSolver
 
 def test_lsm_implied_vol():
 
@@ -26,7 +26,7 @@ def test_lsm_implied_vol():
 
     for K in strikes:
 
-        market_price = longstaff_schwartz_american(
+        market_price = lsm_us_premium(
             base_params['S0'], K, base_params['r'], true_vol, base_params['T'],
             base_params['q'], base_params['N'], base_params['nb_paths'],
             base_params['option_type'], seed=base_params['seed']

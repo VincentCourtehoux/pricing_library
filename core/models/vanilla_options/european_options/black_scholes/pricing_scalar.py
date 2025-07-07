@@ -60,7 +60,7 @@ class BlackScholesScalar:
         """
         return self.d1(S, K, T, r, sigma, q) - sigma * np.sqrt(T)
 
-    def premium(self, S, K, T, r, sigma, q=0.0, option_type="call"):
+    def bs_eu_scalar_premium(self, S, K, T, r, sigma, q=0.0, option_type="call"):
         """
         Compute the Black-Scholes price for a European call or put option.
 
@@ -78,15 +78,12 @@ class BlackScholesScalar:
         """
         option_type = self.validation_option_type(option_type)
 
-        # 1) Intrinsic at maturity (T = 0)
         if T == 0:
             return max(S - K, 0) if option_type == "call" else max(K - S, 0)
 
-        # 2) Zero volatility but T > 0
         if sigma == 0:
             return max(S * np.exp(-q * T) - K * np.exp(-r * T), 0) if option_type == "call" else max(K * np.exp(-r * T) - S * np.exp(-q * T), 0)
-        
-        # 3) Standard Black-Scholes for T > 0 and sigma > 0
+
         d1 = self.d1(S, K, T, r, sigma, q)
         d2 = self.d2(S, K, T, r, sigma, q)
 

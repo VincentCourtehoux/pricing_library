@@ -91,7 +91,7 @@ class BlackScholesVectorized:
         d2[~mask] = 0
         return d2
 
-    def premium(self, S, K, T, r, sigma, q=0.0, option_type="call"):
+    def bs_eu_vectorized_premium(self, S, K, T, r, sigma, q=0.0, option_type="call"):
         """
         Vectorized Black-Scholes price for European call or put options.
 

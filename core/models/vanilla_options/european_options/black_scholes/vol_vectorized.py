@@ -1,6 +1,9 @@
 import numpy as np
-from core.models.vanilla.european.black_scholes.pricing_vectorized import BlackScholesVectorized
+import os
+import sys
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../../..')))
+from core.models.vanilla_options.european_options.black_scholes.pricing_vectorized import BlackScholesVectorized
 bs = BlackScholesVectorized()
 
 def implied_volatility_vectorized(market_prices, S, K, T, r, q, option_types, tolerance=1e-4, max_iterations=1000, sigma_initial=0.2):
@@ -34,23 +37,21 @@ def implied_volatility_vectorized(market_prices, S, K, T, r, q, option_types, to
     valid_mask = T > 0
     expired_mask = ~valid_mask
 
-    # Handle expired options immediately
     intrinsic_call = np.maximum(S - K, 0)
     intrinsic_put = np.maximum(K - S, 0)
     intrinsic_value = np.where(option_types == "call", intrinsic_call, intrinsic_put)
 
     sigma[expired_mask] = np.where(
         np.isclose(market_prices[expired_mask], intrinsic_value[expired_mask], atol=1e-6),
-        0.0,  # exact match → 0 vol
-        np.nan  # mismatch → invalid input
+        0.0, 
+        np.nan  
     )
 
-    # Newton-Raphson for valid (non-expired) options
     for _ in range(max_iterations):
-        if not np.any(valid_mask):  # all expired? skip loop
+        if not np.any(valid_mask):  
             break
 
-        price_estimates = bs.premium(S[valid_mask], K[valid_mask], T[valid_mask], r[valid_mask], sigma[valid_mask], q[valid_mask], option_types[valid_mask])
+        price_estimates = bs.bs_eu_vectorized_premium(S[valid_mask], K[valid_mask], T[valid_mask], r[valid_mask], sigma[valid_mask], q[valid_mask], option_types[valid_mask])
         vegas = bs.vega(S[valid_mask], K[valid_mask], T[valid_mask], r[valid_mask], sigma[valid_mask], q[valid_mask])
         price_differences = price_estimates - market_prices[valid_mask]
 
@@ -66,7 +67,6 @@ def implied_volatility_vectorized(market_prices, S, K, T, r, q, option_types, to
     else:
         raise RuntimeError("Implied volatility did not converge after max_iterations.")
 
-    # Flag out-of-bounds volatilities as NaN
     out_of_bounds = (sigma >= 5.0 - 1e-5) | (sigma <= 1e-6 + 1e-5)
     sigma[out_of_bounds] = np.nan
 

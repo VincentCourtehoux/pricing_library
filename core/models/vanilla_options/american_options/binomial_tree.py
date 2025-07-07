@@ -49,7 +49,7 @@ class BinomialTreeAmerican:
 
         return stock_tree
 
-    def price_option(self):
+    def binomial_tree_us_premium(self):
         """
         Compute the American option price using backward induction.
 

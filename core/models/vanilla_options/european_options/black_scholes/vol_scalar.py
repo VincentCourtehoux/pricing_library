@@ -1,5 +1,9 @@
 import numpy as np
-from core.models.vanilla.european.black_scholes.pricing_scalar import BlackScholesScalar
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../../..')))
+from core.models.vanilla_options.european_options.black_scholes.pricing_scalar import BlackScholesScalar
 
 bs = BlackScholesScalar()
 
@@ -29,7 +33,7 @@ def implied_volatility_scalar(market_price, S, K, T, r, q=0.0, option_type="call
     sigma = sigma_initial
 
     for _ in range(max_iterations):
-        price = bs.premium(S, K, T, r, sigma, q, option_type)
+        price = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, option_type)
         vega_val = bs.vega(S, K, T, r, sigma, q)
         vega_val = max(vega_val, 1e-8)  
         

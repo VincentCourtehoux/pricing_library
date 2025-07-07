@@ -97,14 +97,21 @@ with st.sidebar:
         if selected_group == "european":
             st.session_state.american_radio = None
             st.session_state.barrier_radio = None
+            st.session_state.gap_radio = None
         elif selected_group == "american":
             st.session_state.european_radio = None
             st.session_state.barrier_radio = None
+            st.session_state.gap_radio = None
         elif selected_group == "barrier":
             st.session_state.european_radio = None
             st.session_state.american_radio = None
+            st.session_state.gap_radio = None
+        elif selected_group == "gap":
+            st.session_state.european_radio = None
+            st.session_state.american_radio = None
+            st.session_state.barrier_radio = None
 
-    st.markdown('<div class="model-category"> 🍦 Vanilla Options</div>', unsafe_allow_html=True)
+    st.markdown('<div class="model-category"> 🍦 vanilla_options Options</div>', unsafe_allow_html=True)
 
     st.markdown("**European**")
     european_models = st.radio(
@@ -140,11 +147,23 @@ with st.sidebar:
         on_change=clear_others,
         args=("barrier",)
     )
+    st.markdown("**Gap**")
+    barrier_models = st.radio(
+        "",
+        ["Black Scholes"],
+        key="gap_radio",
+        index=None,
+        label_visibility="collapsed",
+        on_change=clear_others,
+        args=("gap",)
+    )
+
     
     selected_models = {
     "european": st.session_state.get("european_radio"),
     "american": st.session_state.get("american_radio"),
-    "barrier": st.session_state.get("barrier_radio")
+    "barrier": st.session_state.get("barrier_radio"),
+    "gap": st.session_state.get("gap_radio")
     }
 
     active_model = None
@@ -162,6 +181,9 @@ with st.sidebar:
                 pricing_model = model
             elif category == "barrier":
                 option_style = "Barrier"
+                pricing_model = model
+            elif category == "gap":
+                option_style = "Gap"
                 pricing_model = model
             break
 
@@ -197,9 +219,17 @@ if active_model:
             format="%.3f",
             help="Time remaining until option expiration"
         )
-    
+        if option_style == "Gap":
+            trigger = st.number_input(
+                "Trigger Level", 
+                min_value=0.01, 
+                value=110.0, 
+                step=5.0,
+                help="Trigger price level"
+            )
+
     if option_style == "Barrier":
-        barrier_col1, barrier_col2, barrier_col3 = st.columns(3)
+        barrier_col1, barrier_col2 = st.columns(2)
         with barrier_col1:
             barrier_type = st.selectbox(
                 "Barrier Type",
@@ -214,17 +244,9 @@ if active_model:
                 step=5.0,
                 help="Barrier price level"
             )
-        with barrier_col3:
-            rebate = st.number_input(
-                "Rebate Amount", 
-                min_value=0.0, 
-                value=0.0, 
-                step=1.0,
-                help="Rebate amount if barrier is breached"
-            )
     st.subheader("📈 Market Data")
     
-    market_col1, market_col2, market_col3 = st.columns(3)
+    market_col1, market_col2 = st.columns(2)
     
     with market_col1:
         S = st.number_input(
@@ -234,8 +256,6 @@ if active_model:
             step=5.0,
             help="Current market price of the underlying asset"
         )
-    
-    with market_col2:
         r = st.number_input(
             "Risk-Free Rate", 
             min_value=0.0, 
@@ -246,20 +266,16 @@ if active_model:
             help="Annualized risk-free interest rate"
         )
     
-    with market_col3:
+    with market_col2:
         sigma = st.number_input(
             "Volatility", 
-            min_value=0.001, 
+            min_value=0.005, 
             max_value=5.0,
             value=0.20, 
             step=0.01,
             format="%.3f",
             help="Annualized volatility of the underlying asset"
         )
-    
-    dividend_col1, dividend_col2 = st.columns([1, 2])
-    
-    with dividend_col1:
         q = st.number_input(
             "Dividend Yield", 
             min_value=0.0, 
@@ -300,25 +316,26 @@ if active_model:
     if st.button("Calculate Option Price", type="primary", use_container_width=True):
         try:
             if option_style == "European" and pricing_model == "Black-Scholes":
-                from core.models.vanilla.european.black_scholes.pricing_scalar import BlackScholesScalar
-                bs = BlackScholesScalar()
-                price = bs.premium(S, K, T, r, sigma, q, option_type)
+                from core.models.vanilla_options.european_options.black_scholes.pricing_scalar import BlackScholesScalar
+                price = BlackScholesScalar().bs_eu_scalar_premium(S, K, T, r, sigma, q, option_type)
             elif option_style == "European" and pricing_model == "Monte Carlo":
-                from core.models.vanilla.european.monte_carlo import price_european_option_mc
-                price = price_european_option_mc(S, K, T, r, sigma, q, N, nb_paths, option_type, seed=44)
+                from core.models.vanilla_options.european_options.monte_carlo import mc_eu_premium
+                price = mc_eu_premium(S, K, T, r, sigma, q, N, nb_paths, option_type, seed=44)
             elif option_style == "American" and pricing_model == "Longstaff-Schwartz":
-                from core.models.vanilla.american.longstaff_schwartz.pricing import longstaff_schwartz_american
-                price = longstaff_schwartz_american(S, K, r, sigma, T, q, N, nb_paths, option_type, degree=2, seed=42)
+                from core.models.vanilla_options.american_options.longstaff_schwartz.pricing import lsm_us_premium
+                price = lsm_us_premium(S, K, r, sigma, T, q, N, nb_paths, option_type, degree=2, seed=42)
             elif option_style == "American" and pricing_model == "Binomial Tree":
-                from core.models.vanilla.american.binomial_tree import BinomialTreeAmerican
-                bt = BinomialTreeAmerican(S, K, T, r, sigma, N, option_type)
-                price = bt.price_option()
+                from core.models.vanilla_options.american_options.binomial_tree import BinomialTreeAmerican
+                price = BinomialTreeAmerican(S, K, T, r, sigma, N, option_type).binomial_tree_us_premium()
             elif option_style == "Barrier" and pricing_model == "Monte Carlo":
-                from core.models.exotic.barrier.monte_carlo_pricing import mc_barrier_premium
+                from core.models.exotic_options.barrier_options.mc_barrier_pricing import mc_barrier_premium
                 price = mc_barrier_premium(S, K, T, r, sigma, q, barrier, N, nb_paths, option_type, barrier_type, seed=42)
             elif option_style == "Barrier" and pricing_model == "Black Scholes":
-                from core.models.exotic.barrier.bs_barrier_pricing import bs_barrier_premium
-                price = bs_barrier_premium(S, K, T, r, sigma, q, barrier, option_type, barrier_type, rebate)               
+                from core.models.exotic_options.barrier_options.bs_barrier_pricing import bs_barrier_premium
+                price = bs_barrier_premium(S, K, T, r, sigma, q, barrier, option_type, barrier_type) 
+            elif option_style == "Gap" and pricing_model == "Black Scholes":
+                from core.models.exotic_options.gap_options import BlackScholesGap
+                price = BlackScholesGap().bs_gap_premium(S, K, trigger, T, r, sigma, q, option_type)              
             
             st.success(f"**{option_type.capitalize()} Option Price ({pricing_model}): ${price:.4f}**")
             
@@ -335,20 +352,21 @@ if active_model:
                 
                 st.metric("Moneyness", f"{moneyness:.3f}", money_status)
             
-            with met_col2:
-                if option_style == "Barrier":
-                    if barrier_type in ["up-in", "down-in"] and (S > barrier if barrier_type == "down-in" else S < barrier):
-                        intrinsic_value = 0
-                    elif barrier_type in ["up-out", "down-out"] and (S < barrier if barrier_type == "down-out" else S > barrier):
-                        intrinsic_value = 0
-                    else: intrinsic_value = max(0, S - K) if option_type == "call" else max(0, K - S)
-                else : 
-                    intrinsic_value = max(0, S - K) if option_type == "call" else max(0, K - S)
-                st.metric("Intrinsic Value", f"${intrinsic_value:.4f}")
-            
-            with met_col3:
-                time_value = price - intrinsic_value
-                st.metric("Time Value", f"${time_value:.4f}")
+            if option_style in ["European", "American", "Barrier"]:
+                with met_col2:
+                    if option_style == "Barrier":
+                        if barrier_type in ["up-in", "down-in"] and (S > barrier if barrier_type == "down-in" else S < barrier):
+                            intrinsic_value = 0
+                        elif barrier_type in ["up-out", "down-out"] and (S < barrier if barrier_type == "down-out" else S > barrier):
+                            intrinsic_value = 0
+                        else: intrinsic_value = max(0, S - K) if option_type == "call" else max(0, K - S)
+                    else : 
+                        intrinsic_value = max(0, S - K) if option_type == "call" else max(0, K - S)
+                    st.metric("Intrinsic Value", f"${intrinsic_value:.4f}")
+                
+                with met_col3:
+                    time_value = price - intrinsic_value
+                    st.metric("Time Value", f"${time_value:.4f}")
                 
         except Exception as e:
             st.error(f"Error calculating option price: {str(e)}")

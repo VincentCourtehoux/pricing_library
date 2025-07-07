@@ -5,12 +5,9 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../../..')))
-from core.models.vanilla.american.longstaff_schwartz.pricing import longstaff_schwartz_american
+from core.models.vanilla_options.american_options.longstaff_schwartz.pricing import lsm_us_premium
 
 class AmericanImpliedVolSolver:
-    """
-    Implied volatility solver for American options using Longstaff-Schwartz pricing.
-    """
     
     def __init__(self, S0, K, T, r, q, option_type, market_price,
                  N=50, nb_paths=50000, degree=2, seed=42):
@@ -58,7 +55,7 @@ class AmericanImpliedVolSolver:
         start_time = time.time()
         
         try:
-            theoretical_price = longstaff_schwartz_american(
+            theoretical_price = lsm_us_premium(
                 self.S0, self.K, self.r, sigma, self.T, self.q,
                 self.N, self.nb_paths, self.option_type, self.degree, self.seed
             )

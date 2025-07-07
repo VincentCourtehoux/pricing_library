@@ -4,8 +4,8 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from core.models.vanilla.european.black_scholes.vol_scalar import implied_volatility_scalar
-from core.models.vanilla.european.black_scholes.pricing_scalar import BlackScholesScalar
+from core.models.vanilla_options.european_options.black_scholes.vol_scalar import implied_volatility_scalar
+from core.models.vanilla_options.european_options.black_scholes.pricing_scalar import BlackScholesScalar
 bs = BlackScholesScalar()
 
 def test_implied_volatility_recovery():
@@ -21,7 +21,7 @@ def test_implied_volatility_recovery():
     q = 0.02
     option_type = "call"
 
-    price = bs.premium(S, K, T, r, true_vol, q, option_type)
+    price = bs.bs_eu_scalar_premium(S, K, T, r, true_vol, q, option_type)
     iv = implied_volatility_scalar(price, S, K, T, r, q, option_type)
 
     assert np.allclose(iv, true_vol, atol=1e-4)
@@ -55,7 +55,7 @@ def test_implied_volatility_deep_itm():
     q = 0.02
     option_type = "call"
 
-    price = bs.premium(S, K, T, r, true_vol, q, option_type)
+    price = bs.bs_eu_scalar_premium(S, K, T, r, true_vol, q, option_type)
     iv = implied_volatility_scalar(price, S, K, T, r, q, option_type)
 
     assert np.allclose(iv, true_vol, atol=1e-3)
