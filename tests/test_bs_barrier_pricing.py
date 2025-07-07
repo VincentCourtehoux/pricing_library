@@ -24,7 +24,7 @@ class TestBarrierOptions:
         price = bs_barrier_premium(S, K, T, r, sigma, q, H, "call", "down-out")
         
         assert price > 0
-        assert price < bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "call")
+        assert price < bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "call")
         
     def test_down_and_out_call_at_barrier(self):
         S = 95
@@ -66,7 +66,7 @@ class TestBarrierOptions:
         
         price_di = bs_barrier_premium(S, K, T, r, sigma, q, H, "call", "down-in")
         price_do = bs_barrier_premium(S, K, T, r, sigma, q, H, "call", "down-out")
-        european_price = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "call")
+        european_price = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "call")
         
         assert abs(price_di + price_do - european_price) < 1e-10
         
@@ -83,7 +83,7 @@ class TestBarrierOptions:
         price = bs_barrier_premium(S, K, T, r, sigma, q, H, "call", "up-out")
         
         assert price >= 0
-        assert price <= bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "call")
+        assert price <= bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "call")
         
     def test_up_and_out_call_at_barrier(self):
         S = 105
@@ -111,7 +111,7 @@ class TestBarrierOptions:
         
         price_ui = bs_barrier_premium(S, K, T, r, sigma, q, H, "call", "up-in")
         price_uo = bs_barrier_premium(S, K, T, r, sigma, q, H, "call", "up-out")
-        european_price = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "call")
+        european_price = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "call")
         
         assert abs(price_ui + price_uo - european_price) < 1e-10
         
@@ -128,7 +128,7 @@ class TestBarrierOptions:
         price = bs_barrier_premium(S, K, T, r, sigma, q, H, "put", "down-out")
         
         assert price >= 0
-        assert price <= bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "put")
+        assert price <= bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "put")
         
     def test_down_and_out_put_at_barrier(self):
         S = 95
@@ -156,7 +156,7 @@ class TestBarrierOptions:
         
         price_di = bs_barrier_premium(S, K, T, r, sigma, q, H, "put", "down-in")
         price_do = bs_barrier_premium(S, K, T, r, sigma, q, H, "put", "down-out")
-        european_price = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "put")
+        european_price = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "put")
         
         assert abs(price_di + price_do - european_price) < 1e-10
         
@@ -173,7 +173,7 @@ class TestBarrierOptions:
         price = bs_barrier_premium(S, K, T, r, sigma, q, H, "put", "up-out")
         
         assert price >= 0
-        assert price <= bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "put")
+        assert price <= bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "put")
         
     def test_up_and_out_put_at_barrier(self):
         S = 105
@@ -201,7 +201,7 @@ class TestBarrierOptions:
         
         price_ui = bs_barrier_premium(S, K, T, r, sigma, q, H, "put", "up-in")
         price_uo = bs_barrier_premium(S, K, T, r, sigma, q, H, "put", "up-out")
-        european_price = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "put")
+        european_price = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "put")
         
         assert abs(price_ui + price_uo - european_price) < 1e-10
         
@@ -232,7 +232,7 @@ class TestBarrierOptions:
         rebate = 0.0
         
         price = bs_barrier_premium(S, K, T, r, sigma, q, H, "call", "down-out")
-        european_price = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "call")
+        european_price = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "call")
         
         assert abs(price - european_price) < 1e-6
         
@@ -247,7 +247,7 @@ class TestBarrierOptions:
         rebate = 0.0
         
         price = bs_barrier_premium(S, K, T, r, sigma, q, H, "call", "up-out")
-        european_price = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "call")
+        european_price = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "call")
         
         assert abs(price - european_price) < 1e-6
         
@@ -318,7 +318,7 @@ class TestBarrierOptions:
         price = bs_barrier_premium(S, K, T, r, sigma, q, H, "call", "down-out")
         
         assert price >= 0
-        assert price <= bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "call")
+        assert price <= bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "call")
         
     def test_strike_equal_barrier_down_and_out_call(self):
         S = 100

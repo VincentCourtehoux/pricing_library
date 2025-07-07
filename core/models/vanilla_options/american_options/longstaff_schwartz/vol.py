@@ -5,7 +5,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../../..')))
-from core.models.vanilla_options.american_options.longstaff_schwartz.pricing import lsm_us_premium
+from core.models.vanilla_options.american_options.longstaff_schwartz.pricing import lsm_american_premium
 
 class AmericanImpliedVolSolver:
     
@@ -55,7 +55,7 @@ class AmericanImpliedVolSolver:
         start_time = time.time()
         
         try:
-            theoretical_price = lsm_us_premium(
+            theoretical_price = lsm_american_premium(
                 self.S0, self.K, self.r, sigma, self.T, self.q,
                 self.N, self.nb_paths, self.option_type, self.degree, self.seed
             )

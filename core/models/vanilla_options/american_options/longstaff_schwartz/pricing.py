@@ -6,7 +6,7 @@ from models.utils.gbm_simulation import simulate_gbm
 from models.utils.payoff import compute_payoff
 from models.utils.laguerre_matrix import laguerre_matrix
 
-def lsm_us_premium(S0, K, r, sigma, T, q, N, nb_paths, option_type='call', degree=2, seed=None):
+def lsm_american_premium(S0, K, r, sigma, T, q, N, nb_paths, option_type='call', degree=2, seed=None):
     """
     Prices an American option using the Longstaff-Schwartz Monte Carlo method.
     Fixed version that follows the original LS algorithm more closely.

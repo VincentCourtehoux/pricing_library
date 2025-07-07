@@ -33,7 +33,7 @@ def implied_volatility_scalar(market_price, S, K, T, r, q=0.0, option_type="call
     sigma = sigma_initial
 
     for _ in range(max_iterations):
-        price = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, option_type)
+        price = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, option_type)
         vega_val = bs.vega(S, K, T, r, sigma, q)
         vega_val = max(vega_val, 1e-8)  
         

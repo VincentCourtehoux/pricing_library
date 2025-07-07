@@ -19,31 +19,31 @@ def bs_barrier_premium(S, K, T, r, sigma, q, H, option_type, barrier_type):
                 if H <= K:
                     price_di_call = S * np.exp(-q * T) * (H / S)**(2 * lambda_param) * norm.cdf(y) - K * np.exp(
                         -r * T) * (H / S)**(2 * lambda_param - 2) * norm.cdf(y - sigma * np.sqrt(T))
-                    price_do_call = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, option_type='call') - price_di_call
+                    price_do_call = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, option_type='call') - price_di_call
 
                 if H >= K:
                     price_do_call = S * norm.cdf(x1) * np.exp(-q * T) - K * np.exp(-r * T) * norm.cdf(
                         x1 - sigma * np.sqrt(T)) - S * np.exp(-q * T) * (H / S)**(2 * lambda_param) * norm.cdf(
                         y1) + K * np.exp(-r * T) * (H / S)**(2 * lambda_param - 2) * norm.cdf(y1 - sigma * np.sqrt(T))
-                    price_di_call = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, option_type) - price_do_call
+                    price_di_call = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, option_type) - price_do_call
             else:
                 price_do_call = 0
-                price_di_call = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, option_type)
+                price_di_call = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, option_type)
             return price_do_call if barrier_type == "down-out" else price_di_call
         if barrier_type in ["up-out", "up-in"]:
             if S < H:
                 if H <= K:
                     price_uo_call = 0
-                    price_ui_call = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, option_type)
+                    price_ui_call = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, option_type)
                 if H > K:
                     price_ui_call = S * norm.cdf(x1) * np.exp(-q * T) - K * np.exp(-r * T) * norm.cdf(
                         x1 - sigma * np.sqrt(T)) - S * np.exp(-q * T) * (H / S)**(2 * lambda_param) * (
                         norm.cdf(-y) - norm.cdf(-y1)) + K * np.exp(-r * T) * (H / S)**(2 * lambda_param - 2) * (
                         norm.cdf(-y + sigma * np.sqrt(T)) - norm.cdf(-y1 + sigma * np.sqrt(T)))
-                    price_uo_call = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, option_type='call') - price_ui_call
+                    price_uo_call = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, option_type='call') - price_ui_call
             else:
                 price_uo_call = 0
-                price_ui_call = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, option_type)
+                price_ui_call = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, option_type)
             return price_uo_call if barrier_type == "up-out" else price_ui_call
     if option_type == "put":
         if barrier_type in ["up-out", "up-in"]:
@@ -51,25 +51,25 @@ def bs_barrier_premium(S, K, T, r, sigma, q, H, option_type, barrier_type):
                 if H >= K:
                     price_ui_put = -S * np.exp(-q * T) * (H / S)**(2 * lambda_param) * norm.cdf(-y) + K * np.exp(
                         -r * T) * (H / S)**(2 * lambda_param - 2) * norm.cdf(-y + sigma * np.sqrt(T))
-                    price_uo_put = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, option_type='put') - price_ui_put
+                    price_uo_put = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, option_type='put') - price_ui_put
                 if H < K:
                     price_uo_put = -S * norm.cdf(-x1) * np.exp(-q * T) + K * np.exp(-r * T) * norm.cdf(
                         -x1 + sigma * np.sqrt(T)) + S * np.exp(-q * T) * (H / S)**(2 * lambda_param) * norm.cdf(
                         -y1) - K * np.exp(-r * T) * (H / S) * (2 * lambda_param - 2) * norm.cdf(-y1 + sigma * np.sqrt(T))
-                    price_ui_put = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, option_type='put') - price_uo_put
+                    price_ui_put = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, option_type='put') - price_uo_put
             else:
                 price_uo_put = 0
-                price_ui_put = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, option_type)
+                price_ui_put = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, option_type)
             return price_uo_put if barrier_type == "up-out" else price_ui_put   
         if barrier_type in ["down-out", "down-in"]:
             if S > H:  
                 if H > K:
                     price_do_put = 0
-                    price_di_put = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, option_type='put')
+                    price_di_put = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, option_type='put')
                 if H <= K:
                     price_di_put = -S * norm.cdf(-x1) * np.exp(-q * T) + K * np.exp(-r * T) * norm.cdf(-x1 + sigma * np.sqrt(T)) + S * np.exp(-q * T) * (H / S)**(2 * lambda_param) * (norm.cdf(y) - norm.cdf(y1)) - K * np.exp(-r * T) * (H / S)**(2 * lambda_param - 2) * (norm.cdf(y - sigma * np.sqrt(T)) - norm.cdf(y1 - sigma * np.sqrt(T)))
-                    price_do_put = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, option_type='put') - price_di_put
+                    price_do_put = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, option_type='put') - price_di_put
             else: 
                 price_do_put = 0
-                price_di_put = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, option_type)
+                price_di_put = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, option_type)
             return price_do_put if barrier_type == "down-out" else price_di_put

@@ -16,7 +16,7 @@ def test_premium_call_put_known_value():
     sigma = np.array([0.2, 0.2])
     option_type = np.array(["call", "put"])
 
-    price = bs.bs_eu_vectorized_premium(S, K, T, r, sigma, q, option_type)
+    price = bs.bs_european_vectorized_premium(S, K, T, r, sigma, q, option_type)
     assert np.allclose(price, [10.4506, 5.5735], atol=1e-4)
     assert np.allclose(price[0] - price[1], S[0] * np.exp(-q[0] * T[0]) - K[0] * np.exp(-r[0] * T[0]), atol=1e-4)
 
@@ -30,8 +30,8 @@ def test_zero_maturity_price():
     call = np.array(["call"])
     put = np.array(["put"])
 
-    assert bs.bs_eu_vectorized_premium(S, K, T, r, sigma, q, call) == pytest.approx([max(S[0] - K[0], 0)])
-    assert bs.bs_eu_vectorized_premium(S, K, T, r, sigma, q, put) == pytest.approx([max(K[0] - S[0], 0)])
+    assert bs.bs_european_vectorized_premium(S, K, T, r, sigma, q, call) == pytest.approx([max(S[0] - K[0], 0)])
+    assert bs.bs_european_vectorized_premium(S, K, T, r, sigma, q, put) == pytest.approx([max(K[0] - S[0], 0)])
 
 def test_zero_volatility_price():
     S = np.array([100])
@@ -43,8 +43,8 @@ def test_zero_volatility_price():
     call = np.array(["call"])
     put = np.array(["put"])
 
-    call_price = bs.bs_eu_vectorized_premium(S, K, T, r, sigma, q, call)
-    put_price = bs.bs_eu_vectorized_premium(S, K, T, r, sigma, q, put)
+    call_price = bs.bs_european_vectorized_premium(S, K, T, r, sigma, q, call)
+    put_price = bs.bs_european_vectorized_premium(S, K, T, r, sigma, q, put)
 
     call_intrinsic = max(S[0] * np.exp(-q[0] * T[0]) - K[0] * np.exp(-r[0] * T[0]), 0)
     put_intrinsic = max(K[0] * np.exp(-r[0] * T[0]) - S[0] * np.exp(-q[0] * T[0]), 0)
@@ -61,8 +61,8 @@ def test_invariance_scale():
     sigma = np.array([0.2])
     call = np.array(["call"])
 
-    price1 = bs.bs_eu_vectorized_premium(S, K, T, r, sigma, q, call)
-    price2 = bs.bs_eu_vectorized_premium(S * 10, K * 10, T, r, sigma, q, call)
+    price1 = bs.bs_european_vectorized_premium(S, K, T, r, sigma, q, call)
+    price2 = bs.bs_european_vectorized_premium(S * 10, K * 10, T, r, sigma, q, call)
 
     assert np.allclose(price2, price1 * 10, atol=1e-4)
 

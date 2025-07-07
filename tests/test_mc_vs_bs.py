@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from core.models.vanilla_options.european_options.black_scholes.pricing_scalar import BlackScholesScalar
 bs = BlackScholesScalar()
-from core.models.vanilla_options.european_options.monte_carlo import mc_eu_premium
+from core.models.vanilla_options.european_options.monte_carlo import mc_european_premium
 
 def test_put_call_value():
     params = {
@@ -21,7 +21,7 @@ def test_put_call_value():
     }
     
     for option_type in ['call', 'put']:
-        result = mc_eu_premium(**params, option_type=option_type, return_all=True, seed=42)
+        result = mc_european_premium(**params, option_type=option_type, return_all=True, seed=42)
         assert result['confidence_interval'][0] <= result['black_scholes_price'] <= result['confidence_interval'][1]
 
 if __name__ == "__main__":

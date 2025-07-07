@@ -60,7 +60,7 @@ class BlackScholesScalar:
         """
         return self.d1(S, K, T, r, sigma, q) - sigma * np.sqrt(T)
 
-    def bs_eu_scalar_premium(self, S, K, T, r, sigma, q=0.0, option_type="call"):
+    def bs_european_scalar_premium(self, S, K, T, r, sigma, q=0.0, option_type="call"):
         """
         Compute the Black-Scholes price for a European call or put option.
 

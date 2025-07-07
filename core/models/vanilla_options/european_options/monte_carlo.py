@@ -9,7 +9,7 @@ from models.utils.confidence_interval import confidence_interval
 from models.vanilla_options.european_options.black_scholes.pricing_scalar import BlackScholesScalar
 bs = BlackScholesScalar()
 
-def mc_eu_premium(S0, K, T, r, sigma, q, N, nb_paths, option_type="call", return_all=False, seed=None):
+def mc_european_premium(S0, K, T, r, sigma, q, N, nb_paths, option_type="call", return_all=False, seed=None):
     """
     Estimates the price of a European option using Monte Carlo simulation.
 
@@ -35,7 +35,7 @@ def mc_eu_premium(S0, K, T, r, sigma, q, N, nb_paths, option_type="call", return
     payoffs = compute_payoff(ST, K, option_type)
     discounted_payoffs = np.exp(-r * T) * payoffs
     mean_price, margin = confidence_interval(discounted_payoffs)
-    bs_price = bs.bs_eu_scalar_premium(S0, K, T, r, sigma, q, option_type)
+    bs_price = bs.bs_european_scalar_premium(S0, K, T, r, sigma, q, option_type)
     
     if return_all:
         return {
@@ -83,11 +83,11 @@ def convergence_analysis(S0, K, T, r, sigma, q, option_type="call",
     if path_counts is None:
         path_counts = [1000, 5000, 10000, 25000, 50000, 100000]
     
-    bs_price = bs.bs_eu_scalar_premium(S0, K, T, r, sigma, q, option_type)
+    bs_price = bs.bs_european_scalar_premium(S0, K, T, r, sigma, q, option_type)
     
     results = []
     for nb_paths in path_counts:
-        mc_price = mc_eu_premium(
+        mc_price = mc_european_premium(
             S0, K, T, r, sigma, q, N, nb_paths, 
             option_type, return_all=False, seed=None
         )

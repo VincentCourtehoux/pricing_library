@@ -14,8 +14,8 @@ def test_premium_call_put_known_value():
     r = 0.05
     q = 0.00
     sigma = 0.2
-    call_price = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "call")
-    put_price = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "put")
+    call_price = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "call")
+    put_price = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "put")
 
     assert np.allclose(call_price, 10.4506, atol=1e-4)
     assert np.allclose(put_price, 5.5735, atol=1e-4)
@@ -30,8 +30,8 @@ def test_zero_maturity_price():
     q = 0.02
     sigma = 0.2
 
-    assert bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "call") == pytest.approx(max(S - K, 0))
-    assert bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "put") == pytest.approx(max(K - S, 0))
+    assert bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "call") == pytest.approx(max(S - K, 0))
+    assert bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "put") == pytest.approx(max(K - S, 0))
 
 def test_zero_volatility_price():
     S = 100
@@ -41,8 +41,8 @@ def test_zero_volatility_price():
     q = 0.02
     sigma = 0
 
-    call_price = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "call")
-    put_price = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "put")
+    call_price = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "call")
+    put_price = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "put")
 
     call_intrinsic = max(S * np.exp(-q * T) - K * np.exp(-r * T), 0)
     put_intrinsic = max(K * np.exp(-r * T) - S * np.exp(-q * T), 0)
@@ -58,8 +58,8 @@ def test_invariance_scale():
     q = 0.02
     sigma = 0.2
 
-    price1 = bs.bs_eu_scalar_premium(S, K, T, r, sigma, q, "call")
-    price2 = bs.bs_eu_scalar_premium(S * 10, K * 10, T, r, sigma, q, "call")
+    price1 = bs.bs_european_scalar_premium(S, K, T, r, sigma, q, "call")
+    price2 = bs.bs_european_scalar_premium(S * 10, K * 10, T, r, sigma, q, "call")
     assert np.allclose(price2, price1 * 10, atol=1e-4)
 
 def test_delta_bounds():

@@ -4,7 +4,7 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from core.models.vanilla_options.american_options.longstaff_schwartz.pricing import lsm_us_premium
+from core.models.vanilla_options.american_options.longstaff_schwartz.pricing import lsm_american_premium
 from core.models.vanilla_options.european_options.black_scholes.pricing_scalar import BlackScholesScalar
 bs = BlackScholesScalar()
 
@@ -31,8 +31,8 @@ def test_american_vs_european():
     }
 
     for option_type in ['call', 'put']:
-        american_price = lsm_us_premium(**params, option_type=option_type)
-        european_price = bs.bs_eu_scalar_premium(**params2, option_type=option_type)
+        american_price = lsm_american_premium(**params, option_type=option_type)
+        european_price = bs.bs_european_scalar_premium(**params2, option_type=option_type)
 
         tolerance = 1e-2
         msg = f"Erreur : {option_type} américaine ({american_price:.4f}) < européenne ({european_price:.4f})"

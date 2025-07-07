@@ -51,7 +51,7 @@ def implied_volatility_vectorized(market_prices, S, K, T, r, q, option_types, to
         if not np.any(valid_mask):  
             break
 
-        price_estimates = bs.bs_eu_vectorized_premium(S[valid_mask], K[valid_mask], T[valid_mask], r[valid_mask], sigma[valid_mask], q[valid_mask], option_types[valid_mask])
+        price_estimates = bs.bs_european_vectorized_premium(S[valid_mask], K[valid_mask], T[valid_mask], r[valid_mask], sigma[valid_mask], q[valid_mask], option_types[valid_mask])
         vegas = bs.vega(S[valid_mask], K[valid_mask], T[valid_mask], r[valid_mask], sigma[valid_mask], q[valid_mask])
         price_differences = price_estimates - market_prices[valid_mask]
 

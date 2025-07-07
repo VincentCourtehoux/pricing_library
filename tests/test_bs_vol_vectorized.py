@@ -21,7 +21,7 @@ def test_implied_volatility_recovery():
     q = np.array([0.02])
     option_type = np.array(["call"])
 
-    price = bs.bs_eu_vectorized_premium(S, K, T, r, true_vol, q, option_type)
+    price = bs.bs_european_vectorized_premium(S, K, T, r, true_vol, q, option_type)
     iv = implied_volatility_vectorized(price, S, K, T, r, q, option_type)
 
     assert np.allclose(iv, true_vol, atol=1e-4)
@@ -55,7 +55,7 @@ def test_implied_volatility_deep_itm():
     q = np.array([0.02])
     option_type = np.array(["call"])
 
-    price = bs.bs_eu_vectorized_premium(S, K, T, r, true_vol, q, option_type)
+    price = bs.bs_european_vectorized_premium(S, K, T, r, true_vol, q, option_type)
     iv = implied_volatility_vectorized(price, S, K, T, r, q, option_type)
 
     assert np.allclose(iv, true_vol, atol=1e-3)

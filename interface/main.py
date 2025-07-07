@@ -317,16 +317,16 @@ if active_model:
         try:
             if option_style == "European" and pricing_model == "Black-Scholes":
                 from core.models.vanilla_options.european_options.black_scholes.pricing_scalar import BlackScholesScalar
-                price = BlackScholesScalar().bs_eu_scalar_premium(S, K, T, r, sigma, q, option_type)
+                price = BlackScholesScalar().bs_european_scalar_premium(S, K, T, r, sigma, q, option_type)
             elif option_style == "European" and pricing_model == "Monte Carlo":
-                from core.models.vanilla_options.european_options.monte_carlo import mc_eu_premium
-                price = mc_eu_premium(S, K, T, r, sigma, q, N, nb_paths, option_type, seed=44)
+                from core.models.vanilla_options.european_options.monte_carlo import mc_european_premium
+                price = mc_european_premium(S, K, T, r, sigma, q, N, nb_paths, option_type, seed=44)
             elif option_style == "American" and pricing_model == "Longstaff-Schwartz":
-                from core.models.vanilla_options.american_options.longstaff_schwartz.pricing import lsm_us_premium
-                price = lsm_us_premium(S, K, r, sigma, T, q, N, nb_paths, option_type, degree=2, seed=42)
+                from core.models.vanilla_options.american_options.longstaff_schwartz.pricing import lsm_american_premium
+                price = lsm_american_premium(S, K, r, sigma, T, q, N, nb_paths, option_type, degree=2, seed=42)
             elif option_style == "American" and pricing_model == "Binomial Tree":
                 from core.models.vanilla_options.american_options.binomial_tree import BinomialTreeAmerican
-                price = BinomialTreeAmerican(S, K, T, r, sigma, N, option_type).binomial_tree_us_premium()
+                price = BinomialTreeAmerican(S, K, T, r, sigma, N, option_type).binomial_tree_american_premium()
             elif option_style == "Barrier" and pricing_model == "Monte Carlo":
                 from core.models.exotic_options.barrier_options.mc_barrier_pricing import mc_barrier_premium
                 price = mc_barrier_premium(S, K, T, r, sigma, q, barrier, N, nb_paths, option_type, barrier_type, seed=42)
