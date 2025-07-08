@@ -58,7 +58,7 @@ class AmericanImpliedVolSolver:
             theoretical_price = lsm_american_premium(
                 self.S0, self.K, self.r, sigma, self.T, self.q,
                 self.N, self.nb_paths, self.option_type, self.degree, self.seed
-            )
+            )[0]
             
             self.n_evaluations += 1
             self.evaluation_times.append(time.time() - start_time)

@@ -1,8 +1,15 @@
 import streamlit as st
+import matplotlib.pyplot as plt
+import numpy as np  
 import os
 import sys
+import io
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# =============================================================================
+#                             STREAMLIT PAGE CONFIGURATION
+# =============================================================================
 
 st.set_page_config(layout="wide", page_title="Option Pricing Calculator")
 
@@ -90,6 +97,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# =============================================================================
+#                             SIDEBAR MODEL SELECTION
+# =============================================================================
+
 with st.sidebar:
     st.markdown('<h3 class="model-selection-title">Model Selection</h3>', unsafe_allow_html=True)
 
@@ -111,7 +122,7 @@ with st.sidebar:
             st.session_state.american_radio = None
             st.session_state.barrier_radio = None
 
-    st.markdown('<div class="model-category"> 🍦 vanilla_options Options</div>', unsafe_allow_html=True)
+    st.markdown('<div class="model-category"> 🍦 Vanilla Options</div>', unsafe_allow_html=True)
 
     st.markdown("**European**")
     european_models = st.radio(
@@ -187,8 +198,16 @@ with st.sidebar:
                 pricing_model = model
             break
 
+# =============================================================================
+#                             MAIN PAGE HEADER
+# =============================================================================
+
 st.markdown("# Multi-Model Option Pricing Calculator")
 st.markdown("Configure your option parameters and calculate prices using advanced pricing models")
+
+# =============================================================================
+#                             USER INPUTS - CONTRACT PARAMETERS
+# =============================================================================
 
 if active_model:
     st.subheader("📋 Contract Specifications")
@@ -244,6 +263,11 @@ if active_model:
                 step=5.0,
                 help="Barrier price level"
             )
+
+    # =============================================================================
+    #                             USER INPUTS - MARKET DATA
+    # =============================================================================
+
     st.subheader("📈 Market Data")
     
     market_col1, market_col2 = st.columns(2)
@@ -286,6 +310,10 @@ if active_model:
             help="Continuous dividend yield"
         )
     
+    # =============================================================================
+    #                             USER INPUTS - SIMULATION PARAMETERS (if applicable)
+    # =============================================================================
+
     if pricing_model in ["Monte Carlo", "Longstaff-Schwartz", "Binomial Tree"]:
         st.subheader("⚙️ Simulation Parameters")
         
@@ -310,68 +338,139 @@ if active_model:
                 step=1000,
                 help="Number of Monte Carlo simulation paths"
             )
+
+    # =============================================================================
+    #                             OPTION PRICING CALCULATION
+    # =============================================================================
     
     st.subheader("🎯 Results")
     
-    if st.button("Calculate Option Price", type="primary", use_container_width=True):
-        try:
-            if option_style == "European" and pricing_model == "Black-Scholes":
-                from core.models.vanilla_options.european_options.black_scholes.pricing_scalar import BlackScholesScalar
-                price = BlackScholesScalar().bs_european_scalar_premium(S, K, T, r, sigma, q, option_type)
-            elif option_style == "European" and pricing_model == "Monte Carlo":
-                from core.models.vanilla_options.european_options.monte_carlo import mc_european_premium
-                price = mc_european_premium(S, K, T, r, sigma, q, N, nb_paths, option_type, seed=44)
-            elif option_style == "American" and pricing_model == "Longstaff-Schwartz":
-                from core.models.vanilla_options.american_options.longstaff_schwartz.pricing import lsm_american_premium
-                price = lsm_american_premium(S, K, r, sigma, T, q, N, nb_paths, option_type, degree=2, seed=42)
-            elif option_style == "American" and pricing_model == "Binomial Tree":
-                from core.models.vanilla_options.american_options.binomial_tree import BinomialTreeAmerican
-                price = BinomialTreeAmerican(S, K, T, r, sigma, N, option_type).binomial_tree_american_premium()
-            elif option_style == "Barrier" and pricing_model == "Monte Carlo":
-                from core.models.exotic_options.barrier_options.mc_barrier_pricing import mc_barrier_premium
-                price = mc_barrier_premium(S, K, T, r, sigma, q, barrier, N, nb_paths, option_type, barrier_type, seed=42)
-            elif option_style == "Barrier" and pricing_model == "Black Scholes":
-                from core.models.exotic_options.barrier_options.bs_barrier_pricing import bs_barrier_premium
-                price = bs_barrier_premium(S, K, T, r, sigma, q, barrier, option_type, barrier_type) 
-            elif option_style == "Gap" and pricing_model == "Black Scholes":
-                from core.models.exotic_options.gap_options import BlackScholesGap
-                price = BlackScholesGap().bs_gap_premium(S, K, trigger, T, r, sigma, q, option_type)              
+    try:
+        if option_style == "European" and pricing_model == "Black-Scholes":
+            from core.models.vanilla_options.european_options.black_scholes.pricing_scalar import BlackScholesScalar
+            price = BlackScholesScalar().bs_european_scalar_premium(S, K, T, r, sigma, q, option_type)
+        elif option_style == "European" and pricing_model == "Monte Carlo":
+            from core.models.vanilla_options.european_options.monte_carlo import mc_european_premium
+            price = mc_european_premium(S, K, T, r, sigma, q, N, nb_paths, option_type, seed=44)
+        elif option_style == "American" and pricing_model == "Longstaff-Schwartz":
+            from core.models.vanilla_options.american_options.longstaff_schwartz.pricing import lsm_american_premium
+            price = lsm_american_premium(S, K, r, sigma, T, q, N, nb_paths, option_type, degree=2, seed=42)[0]
+        elif option_style == "American" and pricing_model == "Binomial Tree":
+            from core.models.vanilla_options.american_options.binomial_tree import BinomialTreeAmerican
+            price = BinomialTreeAmerican(S, K, T, r, sigma, N, option_type).binomial_tree_american_premium()
+        elif option_style == "Barrier" and pricing_model == "Monte Carlo":
+            from core.models.exotic_options.barrier_options.mc_barrier_pricing import mc_barrier_premium
+            price = mc_barrier_premium(S, K, T, r, sigma, q, barrier, N, nb_paths, option_type, barrier_type, seed=42)
+        elif option_style == "Barrier" and pricing_model == "Black Scholes":
+            from core.models.exotic_options.barrier_options.bs_barrier_pricing import bs_barrier_premium
+            price = bs_barrier_premium(S, K, T, r, sigma, q, barrier, option_type, barrier_type) 
+        elif option_style == "Gap" and pricing_model == "Black Scholes":
+            from core.models.exotic_options.gap_options import BlackScholesGap
+            price = BlackScholesGap().bs_gap_premium(S, K, trigger, T, r, sigma, q, option_type)              
+        
+        st.success(f"**{option_type.capitalize()} Option Price ({pricing_model}): ${price:.4f}**")
+ 
+        st.markdown("""
+        <style>
+            /* Centre le texte dans chaque colonne */
+            div[data-testid="stMetric"] {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            /* Centre le bloc global de colonnes */
+            .streamlit-expanderHeader {
+                justify-content: center;
+            }
+        </style>
+        """, unsafe_allow_html=True) 
+
+        met_col1, met_col2, met_col3 = st.columns(3)
+        
+        with met_col1:
+            moneyness = S / K
+            if moneyness > 1:
+                money_status = "ITM" if option_type == "call" else "OTM"
+            elif moneyness < 1:
+                money_status = "OTM" if option_type == "call" else "ITM"
+            else:
+                money_status = "ATM"
             
-            st.success(f"**{option_type.capitalize()} Option Price ({pricing_model}): ${price:.4f}**")
-            
-            met_col1, met_col2, met_col3 = st.columns(3)
-            
-            with met_col1:
-                moneyness = S / K
-                if moneyness > 1:
-                    money_status = "ITM" if option_type == "call" else "OTM"
-                elif moneyness < 1:
-                    money_status = "OTM" if option_type == "call" else "ITM"
+            st.metric("Moneyness", f"{moneyness:.3f}", money_status)
+        
+        with met_col2:
+            if option_style == "Barrier":
+                if barrier_type in ["up-in", "down-in"] and (S > barrier if barrier_type == "down-in" else S < barrier):
+                    intrinsic_value = 0
+                elif barrier_type in ["up-out", "down-out"] and (S < barrier if barrier_type == "down-out" else S > barrier):
+                    intrinsic_value = 0
+                else: 
+                    intrinsic_value = max(0, S - K) if option_type == "call" else max(0, K - S)
+            elif option_style == "Gap":
+                if option_type == "call":
+                    intrinsic_value = max(S - K, 0) if S > trigger else 0
                 else:
-                    money_status = "ATM"
-                
-                st.metric("Moneyness", f"{moneyness:.3f}", money_status)
-            
-            if option_style in ["European", "American", "Barrier"]:
-                with met_col2:
-                    if option_style == "Barrier":
-                        if barrier_type in ["up-in", "down-in"] and (S > barrier if barrier_type == "down-in" else S < barrier):
-                            intrinsic_value = 0
-                        elif barrier_type in ["up-out", "down-out"] and (S < barrier if barrier_type == "down-out" else S > barrier):
-                            intrinsic_value = 0
-                        else: intrinsic_value = max(0, S - K) if option_type == "call" else max(0, K - S)
-                    else : 
-                        intrinsic_value = max(0, S - K) if option_type == "call" else max(0, K - S)
-                    st.metric("Intrinsic Value", f"${intrinsic_value:.4f}")
-                
-                with met_col3:
-                    time_value = price - intrinsic_value
-                    st.metric("Time Value", f"${time_value:.4f}")
-                
-        except Exception as e:
-            st.error(f"Error calculating option price: {str(e)}")
-            st.info("Please check your input parameters and try again.")
-    
+                    intrinsic_value = max(K - S, 0) if S < trigger else 0
+            else: 
+                intrinsic_value = max(0, S - K) if option_type == "call" else max(0, K - S)
+            st.metric("Intrinsic Value", f"${intrinsic_value:.4f}")
+        
+        with met_col3:
+            time_value = price - intrinsic_value
+            st.metric("Time Value", f"${time_value:.4f}")
+   
+        if option_style == "European":
+
+            col1, col2, col3, col4, col5 = st.columns(5)
+
+            from core.models.vanilla_options.european_options.black_scholes.pricing_scalar import BlackScholesScalar
+            col1.metric("Delta (Δ)", f"{BlackScholesScalar().delta(S, K, T, r, sigma, q, option_type):.4f}")
+            col2.metric("Gamma (Γ)", f"{BlackScholesScalar().gamma(S, K, T, r, sigma, q):.4f}")
+            col3.metric("Vega 1% (𝜈)", f"{BlackScholesScalar().numerical_vega(S, K, T, r, sigma, q):.4f}")
+            col4.metric("Theta 1 day (Θ)", f"{BlackScholesScalar().numerical_daily_theta(S, K, T, r, sigma, q, option_type):.4f}")
+            col5.metric("Rho 1% (ρ)", f"{BlackScholesScalar().numerical_rho(S, K, T, r, sigma, q, option_type):.4f}")
+
+    except Exception as e:
+        st.error(f"Error calculating option price: {str(e)}")
+        st.info("Please check your input parameters and try again.")
+        
+    # =============================================================================
+    #                             VISUALIZATIONS
+    # =============================================================================
+
+    if option_style == "European":
+
+        st.subheader("📊 Visualization")
+
+        viz_col1, viz_col2, viz_col3 = st.columns(3)
+
+        with viz_col1:
+            position = st.selectbox("Position", ["Long", "Short"])
+
+        from visualizations.plot_profit_european_options import plot_profit_european_options
+        from visualizations.plot_payoff_european_options import plot_payoff_european_options
+        fig1 = plot_profit_european_options(S, K, T, r, sigma, q, option_type, position)
+        fig2 = plot_payoff_european_options(S, K, T, r, sigma, q, option_type)
+
+        pl_col1, plt_col2, plt_col3 = st.columns([1,8,1])
+        with plt_col2:
+            st.pyplot(fig1)
+            st.write("")
+            st.pyplot(fig2)
+
+    if option_style == "American" and pricing_model == "Longstaff-Schwartz":
+        from visualizations.plot_exercise_nodes_american_options import plot_exercise_nodes_american_options
+        fig1 = plot_exercise_nodes_american_options(S, K, T, r, sigma, q, N, 100)
+
+        pl_col1, plt_col2, plt_col3 = st.columns([1,8,1])
+        with plt_col2:
+            st.pyplot(fig1)
+
+    # =============================================================================
+    #                             MODEL INFORMATION
+    # =============================================================================
+
     st.markdown('</div>', unsafe_allow_html=True)
     
     with st.expander("📚 Model Information"):
@@ -428,9 +527,8 @@ if active_model:
             
             **Best for:** American options with complex features
             """)
-
 else:
     st.info("👈 Please select a pricing model from the sidebar to configure parameters")
-
+            
 st.markdown("---")
-st.markdown("© 2025 - Développé par Vincent Courtehoux avec [Streamlit](https://streamlit.io/)")
+st.markdown("© 2025 - Developed by Vincent Courtehoux using [Streamlit](https://streamlit.io/)")

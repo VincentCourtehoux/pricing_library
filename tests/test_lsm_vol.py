@@ -30,7 +30,7 @@ def test_lsm_implied_vol():
             base_params['S0'], K, base_params['r'], true_vol, base_params['T'],
             base_params['q'], base_params['N'], base_params['nb_paths'],
             base_params['option_type'], seed=base_params['seed']
-        )
+        )[0]
 
         solver = AmericanImpliedVolSolver(
             K=K, market_price=market_price, **base_params

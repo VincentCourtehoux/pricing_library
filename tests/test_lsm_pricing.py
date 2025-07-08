@@ -31,7 +31,7 @@ def test_american_vs_european():
     }
 
     for option_type in ['call', 'put']:
-        american_price = lsm_american_premium(**params, option_type=option_type)
+        american_price = lsm_american_premium(**params, option_type=option_type)[0]
         european_price = bs.bs_european_scalar_premium(**params2, option_type=option_type)
 
         tolerance = 1e-2

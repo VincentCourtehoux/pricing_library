@@ -9,7 +9,7 @@ from models.utils.laguerre_matrix import laguerre_matrix
 def lsm_american_premium(S0, K, r, sigma, T, q, N, nb_paths, option_type='call', degree=2, seed=None):
     """
     Prices an American option using the Longstaff-Schwartz Monte Carlo method.
-    Fixed version that follows the original LS algorithm more closely.
+    Returns both the premium and exercise decision data for plotting.
     
     Parameters:
     S0 (float): Initial asset price
@@ -25,16 +25,21 @@ def lsm_american_premium(S0, K, r, sigma, T, q, N, nb_paths, option_type='call',
     seed (int or None): Random seed for reproducibility
     
     Returns:
-    float: option premium
+    tuple: (premium, S_paths, exercise_matrix, time_grid)
     """
     if seed is not None:
         np.random.seed(seed)
     
     dt = T / N
     discount = np.exp(-r * dt)
-    S = simulate_gbm(S0, T, r, sigma, q, N, nb_paths, seed)
-    CF = compute_payoff(S[:, -1], K, option_type) 
+    time_grid = np.linspace(0, T, N + 1)
     
+    S = simulate_gbm(S0, T, r, sigma, q, N, nb_paths, seed)
+
+    exercise_matrix = np.zeros((nb_paths, N + 1), dtype=bool)
+
+    CF = compute_payoff(S[:, -1], K, option_type)
+
     for t in range(N - 1, 0, -1):
         CF = CF * discount
         exercise_value = compute_payoff(S[:, t], K, option_type)
@@ -69,8 +74,14 @@ def lsm_american_premium(S0, K, r, sigma, T, q, N, nb_paths, option_type='call',
             continuation_value = np.full(len(S_itm), np.mean(CF_itm))
     
         exercise_decision = exercise_value_itm >= continuation_value
+
+        itm_indices = np.where(itm)[0]
+        exercise_indices = itm_indices[exercise_decision]
+        exercise_matrix[exercise_indices, t] = True
+  
         CF[itm] = np.where(exercise_decision, exercise_value_itm, CF_itm)
+    
     CF = CF * discount
     price = np.mean(CF)
     
-    return price
+    return price, S, exercise_matrix, time_grid

@@ -101,6 +101,9 @@ class BlackScholesGap:
         d2 = self.d2(S, K2, T, r, sigma, q)
 
         if option_type == "call":
-            return S * np.exp(-q * T) * norm.cdf(d1) - K1 * np.exp(-r * T) * norm.cdf(d2)
+            return max(S * np.exp(-q * T) * norm.cdf(d1) - K1 * np.exp(-r * T) * norm.cdf(d2), 0)
         else: 
-            return K1 * np.exp(-r * T) * norm.cdf(-d2) - S * np.exp(-q * T) * norm.cdf(-d1)
+            return max(K1 * np.exp(-r * T) * norm.cdf(-d2) - S * np.exp(-q * T) * norm.cdf(-d1), 0)
+
+
+

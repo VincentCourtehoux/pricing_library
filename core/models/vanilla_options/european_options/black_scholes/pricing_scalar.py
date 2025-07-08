@@ -147,8 +147,27 @@ class BlackScholesScalar:
         """
         d1 = self.d1(S, K, T, r, sigma, q)
         return S * np.exp(-q * T) * norm.pdf(d1) * np.sqrt(T)
+    
+    def numerical_vega(self, S, K, T, r, sigma, q=0.0, option_type="call", ds = 0.005):
+        """
+        Calculate the vega (volatility sensitivity) of a European call or put option.
 
-    def theta(self, S, K, T, r, sigma, q=0.0, option_type="call"):
+        Parameters:
+        S (float): Current price of the underlying asset
+        K (float): Strike price
+        T (float): Time to maturity (in years)
+        r (float): Risk-free interest rate (annual)
+        sigma (float): Volatility of the underlying asset (annual)
+        q (float): Continuous dividend yield
+        option_type (str): 'call' or 'put'
+        ds (float): Step size for volatility (e.g., 0.01 = 1%)
+
+        Returns:
+        float: Vega value (sensitivity of option price to volatility changes)
+        """
+        return self.bs_european_scalar_premium(S, K, T, r, sigma + ds, q, option_type) - self.bs_european_scalar_premium(S, K, T, r, sigma - ds, q, option_type)
+
+    def theta_analytical(self, S, K, T, r, sigma, q=0.0, option_type="call"):
         """
         Calculate the theta (time decay) of a European call or put option.
 
@@ -173,6 +192,25 @@ class BlackScholesScalar:
             return term1 + q * S * np.exp(-q * T) * norm.cdf(d1) - r * K * np.exp(-r * T) * norm.cdf(d2)
         else:
             return term1 - q * S * np.exp(-q * T) * norm.cdf(-d1) + r * K * np.exp(-r * T) * norm.cdf(-d2)
+    
+    def numerical_daily_theta(self, S, K, T, r, sigma, q=0, option_type="call", dt=1/252):
+        """
+        Compute the numerical (daily) theta of a European option.
+
+        Parameters:
+        S (float): Spot price
+        K (float): Strike price
+        T (float): Time to maturity (in years)
+        r (float): Risk-free interest rate (annualized)
+        sigma (float): Volatility (annualized)
+        q (float): Continuous dividend yield
+        option_type (str): 'call' or 'put'
+        dt (float): Time step (in years), default is 1 day
+
+        Returns:
+        float: Approximate theta per day (negative means time decay)
+        """
+        return self.bs_european_scalar_premium(S, K, T - dt, r, sigma, q, option_type) - self.bs_european_scalar_premium(S, K, T, r, sigma, q, option_type)
 
     def rho(self, S, K, T, r, sigma, q=0.0, option_type="call"):
         """
@@ -197,3 +235,24 @@ class BlackScholesScalar:
             return K * T * np.exp(-r * T) * norm.cdf(d2)
         else:
             return -K * T * np.exp(-r * T) * norm.cdf(-d2)
+        
+    def numerical_rho(self, S, K, T, r, sigma, q=0.0, option_type="call", dr=0.005):
+        """
+        Calculate the rho (interest rate sensitivity) of a European call or put option.
+
+        Parameters:
+        S (float): Current price of the underlying asset
+        K (float): Strike price
+        T (float): Time to maturity (in years)
+        r (float): Risk-free interest rate (annual)
+        sigma (float): Volatility of the underlying asset (annual)
+        q (float): Continuous dividend yield
+        option_type (str): 'call' or 'put'
+        dr (float): Step size for interest rate (e.g., 0.01 = 1%)
+
+        Returns:
+        float: Rho value (sensitivity of option price to interest rate changes)
+        """
+        return self.bs_european_scalar_premium(S, K, T, r + dr, sigma, q, option_type) - self.bs_european_scalar_premium(S, K, T, r - dr, sigma, q, option_type)
+
+        
