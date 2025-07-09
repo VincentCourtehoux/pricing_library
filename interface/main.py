@@ -354,7 +354,7 @@ if active_model:
             price = mc_european_premium(S, K, T, r, sigma, q, N, nb_paths, option_type, seed=44)
         elif option_style == "American" and pricing_model == "Longstaff-Schwartz":
             from core.models.vanilla_options.american_options.longstaff_schwartz.pricing import lsm_american_premium
-            price = lsm_american_premium(S, K, r, sigma, T, q, N, nb_paths, option_type, degree=2, seed=42)[0]
+            price = lsm_american_premium(S, K, T, r, sigma, q, N, nb_paths, option_type, seed=42)[0]
         elif option_style == "American" and pricing_model == "Binomial Tree":
             from core.models.vanilla_options.american_options.binomial_tree import BinomialTreeAmerican
             price = BinomialTreeAmerican(S, K, T, r, sigma, N, option_type).binomial_tree_american_premium()
@@ -448,8 +448,8 @@ if active_model:
         with viz_col1:
             position = st.selectbox("Position", ["Long", "Short"])
 
-        from visualizations.plot_profit_european_options import plot_profit_european_options
-        from visualizations.plot_payoff_european_options import plot_payoff_european_options
+        from visualizations.plot_bs_european_profit import plot_profit_european_options
+        from visualizations.plot_bs_european_payoff import plot_payoff_european_options
         fig1 = plot_profit_european_options(S, K, T, r, sigma, q, option_type, position)
         fig2 = plot_payoff_european_options(S, K, T, r, sigma, q, option_type)
 
@@ -460,12 +460,29 @@ if active_model:
             st.pyplot(fig2)
 
     if option_style == "American" and pricing_model == "Longstaff-Schwartz":
-        from visualizations.plot_exercise_nodes_american_options import plot_exercise_nodes_american_options
-        fig1 = plot_exercise_nodes_american_options(S, K, T, r, sigma, q, N, 100)
 
-        pl_col1, plt_col2, plt_col3 = st.columns([1,8,1])
+        st.subheader("📊 Visualization")
+
+        from visualizations.plot_lsm_gbm_distribution import plot_exercise_nodes_american_options_with_distribution
+        fig1 = plot_exercise_nodes_american_options_with_distribution(S, K, T, r, sigma, q, N, 100)
+
+        plt_col1, plt_col2, plt_col3 = st.columns([1,8,1])
         with plt_col2:
             st.pyplot(fig1)
+
+        run_simulation = st.button("Run Convergence Analysis")
+
+        plt2_col1, plt2_col2, plt2_col3 = st.columns([1,12,1])
+
+        with plt2_col2:
+            if run_simulation:
+                from visualizations.plot_lsm_convergence import plot_lsm_convergence
+
+                fig2, fig3  = plot_lsm_convergence(S, K, T, r, sigma, q, N, option_type, max_paths=nb_paths)
+                st.pyplot(fig2)
+                st.pyplot(fig3)
+
+        
 
     # =============================================================================
     #                             MODEL INFORMATION

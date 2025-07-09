@@ -19,7 +19,7 @@ def plot_exercise_nodes_american_options(S0, K, T, r, sigma, q, N, nb_paths_to_p
     figsize: Figure size
     """
     premium, S_paths, exercise_matrix, time_grid = lsm_american_premium(
-        S0, K, r, sigma, T, q, N, nb_paths_to_plot, option_type='put', degree=2, seed=42
+        S0, K, T, r, sigma, q, N, nb_paths_to_plot, option_type='put', degree=2, seed=42
     )
     fig, ax = plt.subplots(figsize=figsize)
     

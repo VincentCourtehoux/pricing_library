@@ -12,9 +12,9 @@ def test_american_vs_european():
     params = {
         'S0': 100,
         'K': 100,
+        'T': 1.0,
         'r': 0.05,
         'sigma': 0.2,
-        'T': 1.0,
         'q': 0.0,
         'N': 50,
         'nb_paths': 50000,

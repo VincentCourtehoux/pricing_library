@@ -56,7 +56,7 @@ class AmericanImpliedVolSolver:
         
         try:
             theoretical_price = lsm_american_premium(
-                self.S0, self.K, self.r, sigma, self.T, self.q,
+                self.S0, self.K, self.T, self.r, sigma, self.q,
                 self.N, self.nb_paths, self.option_type, self.degree, self.seed
             )[0]
             

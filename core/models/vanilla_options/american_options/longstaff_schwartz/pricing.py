@@ -6,7 +6,7 @@ from models.utils.gbm_simulation import simulate_gbm
 from models.utils.payoff import compute_payoff
 from models.utils.laguerre_matrix import laguerre_matrix
 
-def lsm_american_premium(S0, K, r, sigma, T, q, N, nb_paths, option_type='call', degree=2, seed=None):
+def lsm_american_premium(S0, K, T, r, sigma, q, N, nb_paths, option_type='call', degree=2, seed=None):
     """
     Prices an American option using the Longstaff-Schwartz Monte Carlo method.
     Returns both the premium and exercise decision data for plotting.
@@ -14,9 +14,9 @@ def lsm_american_premium(S0, K, r, sigma, T, q, N, nb_paths, option_type='call',
     Parameters:
     S0 (float): Initial asset price
     K (float): Strike price
+    T (float): Time to maturity (in years)
     r (float): Risk-free interest rate
     sigma (float): Volatility
-    T (float): Time to maturity (in years)
     q (float): Dividend yield
     N (int): Number of time steps
     nb_paths (int): Number of Monte Carlo simulation paths
