@@ -130,7 +130,7 @@ class BlackScholesScalar:
         d1 = self.d1(S, K, T, r, sigma, q)
         return np.exp(-q * T) * norm.pdf(d1) / (S * sigma * np.sqrt(T))
 
-    def vega(self, S, K, T, r, sigma, q=0.0):
+    def vega_analytical(self, S, K, T, r, sigma, q=0.0):
         """
         Calculate the vega of a European option (same for call and put).
 
@@ -212,7 +212,7 @@ class BlackScholesScalar:
         """
         return self.bs_european_scalar_premium(S, K, T - dt, r, sigma, q, option_type) - self.bs_european_scalar_premium(S, K, T, r, sigma, q, option_type)
 
-    def rho(self, S, K, T, r, sigma, q=0.0, option_type="call"):
+    def rho_analytical(self, S, K, T, r, sigma, q=0.0, option_type="call"):
         """
         Calculate the rho (interest rate sensitivity) of a European call or put option.
 

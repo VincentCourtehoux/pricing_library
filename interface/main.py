@@ -6,6 +6,19 @@ import sys
 import io
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from core.models.vanilla_options.european_options.black_scholes.pricing_scalar import BlackScholesScalar
+from core.models.vanilla_options.european_options.monte_carlo import mc_european_premium
+from core.models.vanilla_options.american_options.longstaff_schwartz.pricing import lsm_american_premium
+from core.models.vanilla_options.american_options.binomial_tree import BinomialTreeAmerican
+from core.models.exotic_options.barrier_options.mc_barrier_pricing import mc_barrier_premium
+from core.models.exotic_options.barrier_options.bs_barrier_pricing import bs_barrier_premium
+from core.models.exotic_options.gap_options import BlackScholesGap
+
+from visualizations.plot_bs_european_profit import plot_profit_european_options
+from visualizations.plot_bs_european_payoff import plot_payoff_european_options
+from visualizations.plot_european_greeks import plot_greeks_european_options
+from visualizations.plot_lsm_gbm_distribution import plot_exercise_nodes_american_options_with_distribution
+from visualizations.plot_lsm_convergence import plot_lsm_convergence
 
 # =============================================================================
 #                             STREAMLIT PAGE CONFIGURATION
@@ -168,7 +181,6 @@ with st.sidebar:
         on_change=clear_others,
         args=("gap",)
     )
-
     
     selected_models = {
     "european": st.session_state.get("european_radio"),
@@ -347,25 +359,18 @@ if active_model:
     
     try:
         if option_style == "European" and pricing_model == "Black-Scholes":
-            from core.models.vanilla_options.european_options.black_scholes.pricing_scalar import BlackScholesScalar
             price = BlackScholesScalar().bs_european_scalar_premium(S, K, T, r, sigma, q, option_type)
         elif option_style == "European" and pricing_model == "Monte Carlo":
-            from core.models.vanilla_options.european_options.monte_carlo import mc_european_premium
             price = mc_european_premium(S, K, T, r, sigma, q, N, nb_paths, option_type, seed=44)
         elif option_style == "American" and pricing_model == "Longstaff-Schwartz":
-            from core.models.vanilla_options.american_options.longstaff_schwartz.pricing import lsm_american_premium
             price = lsm_american_premium(S, K, T, r, sigma, q, N, nb_paths, option_type, seed=42)[0]
         elif option_style == "American" and pricing_model == "Binomial Tree":
-            from core.models.vanilla_options.american_options.binomial_tree import BinomialTreeAmerican
             price = BinomialTreeAmerican(S, K, T, r, sigma, N, option_type).binomial_tree_american_premium()
         elif option_style == "Barrier" and pricing_model == "Monte Carlo":
-            from core.models.exotic_options.barrier_options.mc_barrier_pricing import mc_barrier_premium
             price = mc_barrier_premium(S, K, T, r, sigma, q, barrier, N, nb_paths, option_type, barrier_type, seed=42)
         elif option_style == "Barrier" and pricing_model == "Black Scholes":
-            from core.models.exotic_options.barrier_options.bs_barrier_pricing import bs_barrier_premium
             price = bs_barrier_premium(S, K, T, r, sigma, q, barrier, option_type, barrier_type) 
         elif option_style == "Gap" and pricing_model == "Black Scholes":
-            from core.models.exotic_options.gap_options import BlackScholesGap
             price = BlackScholesGap().bs_gap_premium(S, K, trigger, T, r, sigma, q, option_type)              
         
         st.success(f"**{option_type.capitalize()} Option Price ({pricing_model}): ${price:.4f}**")
@@ -424,7 +429,6 @@ if active_model:
 
             col1, col2, col3, col4, col5 = st.columns(5)
 
-            from core.models.vanilla_options.european_options.black_scholes.pricing_scalar import BlackScholesScalar
             col1.metric("Delta (Δ)", f"{BlackScholesScalar().delta(S, K, T, r, sigma, q, option_type):.4f}")
             col2.metric("Gamma (Γ)", f"{BlackScholesScalar().gamma(S, K, T, r, sigma, q):.4f}")
             col3.metric("Vega 1% (𝜈)", f"{BlackScholesScalar().numerical_vega(S, K, T, r, sigma, q):.4f}")
@@ -443,46 +447,63 @@ if active_model:
 
         st.subheader("📊 Visualization")
 
-        viz_col1, viz_col2, viz_col3 = st.columns(3)
+        selected_graphs = st.session_state.get("graphs_multiselect", [])
 
-        with viz_col1:
-            position = st.selectbox("Position", ["Long", "Short"])
+        selected_graphs = st.multiselect(
+            "Select the graphs to display:",
+            ["Greeks", "Payoff", "Profit"],
+            default=selected_graphs,
+            key="graphs_multiselect"
+        )
 
-        from visualizations.plot_bs_european_profit import plot_profit_european_options
-        from visualizations.plot_bs_european_payoff import plot_payoff_european_options
-        fig1 = plot_profit_european_options(S, K, T, r, sigma, q, option_type, position)
-        fig2 = plot_payoff_european_options(S, K, T, r, sigma, q, option_type)
+        if "Greeks" in selected_graphs:
+            delta_fig, gamma_fig, vega_fig, theta_fig, rho_fig = plot_greeks_european_options(S, K, T, r, sigma, q, option_type)
+            plt_col1, plt_col2, plt_col3 = st.columns([1,8,1])
+            with plt_col2:
+                for greek_fig in [delta_fig, gamma_fig, vega_fig, theta_fig, rho_fig]:
+                    st.pyplot(greek_fig)
+                    st.write("")
 
-        pl_col1, plt_col2, plt_col3 = st.columns([1,8,1])
-        with plt_col2:
-            st.pyplot(fig1)
-            st.write("")
-            st.pyplot(fig2)
+        if "Payoff" in selected_graphs:
+            plt_col1, plt_col2, plt_col3 = st.columns([1, 8, 1])
+            with plt_col2:
+                fig_payoff = plot_payoff_european_options(S, K, T, r, sigma, q, option_type)
+                st.pyplot(fig_payoff)
+
+        if "Profit" in selected_graphs:
+            viz_col1, viz_col2, viz_col3 = st.columns(3)
+            with viz_col1:
+                position = st.selectbox("Position", ["Long", "Short"])
+            plt_col1, plt_col2, plt_col3 = st.columns([1, 8, 1])
+            with plt_col2:
+                fig_profit = plot_profit_european_options(S, K, T, r, sigma, q, option_type, position)
+                st.pyplot(fig_profit)
+
 
     if option_style == "American" and pricing_model == "Longstaff-Schwartz":
 
         st.subheader("📊 Visualization")
+        selected_graphs = st.session_state.get("graphs_multiselect", [])
 
-        from visualizations.plot_lsm_gbm_distribution import plot_exercise_nodes_american_options_with_distribution
-        fig1 = plot_exercise_nodes_american_options_with_distribution(S, K, T, r, sigma, q, N, 100)
+        selected_graphs = st.multiselect(
+            "Select the graphs to display:",
+            ["Simulated Paths & Price Distribution", "Convergence"],
+            default=selected_graphs,
+            key="graphs_multiselect"
+        )
 
-        plt_col1, plt_col2, plt_col3 = st.columns([1,8,1])
-        with plt_col2:
-            st.pyplot(fig1)
+        if "Simulated Paths & Price Distribution" in selected_graphs:
+            fig1 = plot_exercise_nodes_american_options_with_distribution(S, K, T, r, sigma, q, N, 100)
+            plt_col1, plt_col2, plt_col3 = st.columns([1,8,1])
+            with plt_col2:
+                st.pyplot(fig1)
 
-        run_simulation = st.button("Run Convergence Analysis")
-
-        plt2_col1, plt2_col2, plt2_col3 = st.columns([1,12,1])
-
-        with plt2_col2:
-            if run_simulation:
-                from visualizations.plot_lsm_convergence import plot_lsm_convergence
-
-                fig2, fig3  = plot_lsm_convergence(S, K, T, r, sigma, q, N, option_type, max_paths=nb_paths)
+        if "Convergence" in selected_graphs:
+            fig2, fig3  = plot_lsm_convergence(S, K, T, r, sigma, q, N, option_type, max_paths=nb_paths)
+            plt_col1, plt_col2, plt_col3 = st.columns([1, 8, 1])
+            with plt_col2:
                 st.pyplot(fig2)
                 st.pyplot(fig3)
-
-        
 
     # =============================================================================
     #                             MODEL INFORMATION

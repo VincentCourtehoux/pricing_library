@@ -12,7 +12,7 @@ def plot_lsm_convergence(S0, K, T, r, sigma, q, N, option_type, min_paths=100, m
     path_counts = np.unique(np.round(np.geomspace(min_paths, max_paths, num_points)).astype(int))
     
     bench_time = time.time()
-    benchmark_price = lsm_american_premium(S0, K, T, r, sigma, q, N, max_paths, option_type, seed=42)[0]
+    final_price = lsm_american_premium(S0, K, T, r, sigma, q, N, max_paths, option_type, seed=42)[0]
     bench_time = time.time() - bench_time 
     european_price = BlackScholesScalar().bs_european_scalar_premium(S0, K, T, r, sigma, q, option_type) 
     
@@ -38,13 +38,13 @@ def plot_lsm_convergence(S0, K, T, r, sigma, q, N, option_type, min_paths=100, m
         std_errors.append(std_error)
         computation_times.append(avg_time)
 
-    prices.append(benchmark_price)
+    prices.append(final_price)
     std_errors.append(0)
     computation_times.append(bench_time)
     
     fig1, ax1 = plt.subplots(figsize=(12, 5))
     ax1.semilogx(path_counts, prices, linestyle='-', marker='o', color='blue', alpha=0.8, linewidth=2, markersize=6, label='LSM Price')
-    ax1.axhline(y=benchmark_price, color='k', linestyle='--', linewidth=2, label=f'Benchmark {max_paths} Paths ({benchmark_price:.6f})')
+    ax1.axhline(y=final_price, color='k', linestyle='--', linewidth=2, label=f'Final Price ({final_price:.6f})')
     ax1.axhline(y=european_price, color='gray', linestyle=':', linewidth=2, label=f'European Price ({european_price:.6f})')
     ax1.fill_between(path_counts, 
                      np.array(prices) - 1.96 * np.array(std_errors), 
