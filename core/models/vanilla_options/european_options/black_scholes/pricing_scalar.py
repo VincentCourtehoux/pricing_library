@@ -254,6 +254,3 @@ class BlackScholesScalar:
         float: Rho value (sensitivity of option price to interest rate changes)
         """
         return self.bs_european_scalar_premium(S, K, T, r + dr, sigma, q, option_type) - self.bs_european_scalar_premium(S, K, T, r - dr, sigma, q, option_type)
-
-        
-print(BlackScholesScalar().bs_european_scalar_premium(100, 100, 1, 0.05, 0.2, 0, option_type='call'))
