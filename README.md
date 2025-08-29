@@ -95,7 +95,7 @@ The library supports numerical computation of Greeks for all option types:
 Compute implied volatility from a market option price using **Newton-Raphson iteration**  
 with analytical Vega from the Black-Scholes model.
 
-## Usage
+## Usage Examples
 
 ### Example 1: European Call (Black-Scholes) 
 
