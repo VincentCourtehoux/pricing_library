@@ -7,6 +7,7 @@ using methods like Black-Scholes, Monte Carlo, Binomial Trees, and Least Squares
 
 from .core.pricing_service import PricingService
 from .core.exceptions import UnsupportedOptionTypeError
+from .models.implied_volatility import ImpliedVolatility
 
 from .models import (
     BlackScholesModel,
@@ -14,7 +15,8 @@ from .models import (
     BinomialModel,
     LeastSquaresMC,
     BlackScholesGapModel,
-    BlackScholesBarrierModel
+    BlackScholesBarrierModel,
+    ImpliedVolatility
 )
 
 from .calculators import (
@@ -48,6 +50,7 @@ __all__ = [
     'LeastSquaresMC',
     'BlackScholesGapModel',
     'BlackScholesBarrierModel',
+    'ImpliedVolatility',
     
     # Calculators
     'EuropeanCalculator',
