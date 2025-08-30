@@ -50,7 +50,8 @@ class AmericanCalculator(BaseCalculator):
                 'n_paths': params.get('monte_carlo_paths', 10000),
                 'n_steps': params.get('monte_carlo_steps', 100),
                 'regression_type': params.get('regression_type', 'polynomial'),
-                'regression_degree': params.get('regression_degree', 2)
+                'regression_degree': params.get('regression_degree', 2),
+                'seed': params.get('seed', None)
             })
         elif method == 'binomial_tree':
             extra_params.update({

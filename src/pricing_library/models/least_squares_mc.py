@@ -10,8 +10,9 @@ class LeastSquaresMC(PricingModel):
         n_steps = kwargs.get('n_steps', 100)
         regression_type = kwargs.get('regression_type', 'polynomial')
         regression_degree = kwargs.get('regression_degree', 2)
+        seed = kwargs.get('seed', None)
         
-        paths = GeometricBrownianMotion.simulate(S, T, r, sigma, q, n_paths, n_steps)
+        paths = GeometricBrownianMotion.simulate(S, T, r, sigma, q, n_paths, n_steps, seed=seed)
         
         price, std_error = self._lsm_pricing(
             paths, K, r, T, option_type, regression_type, regression_degree

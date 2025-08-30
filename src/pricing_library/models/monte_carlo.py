@@ -8,8 +8,9 @@ class VanillaMonteCarlo(PricingModel):
         n_paths = kwargs.get('n_paths', 10000)
         n_steps = kwargs.get('n_steps', 100)
         option_style = kwargs.get('option_style', 'european')
+        seed = kwargs.get('seed', None)
 
-        paths = GeometricBrownianMotion.simulate(S, T, r, sigma, q, n_paths, n_steps)
+        paths = GeometricBrownianMotion.simulate(S, T, r, sigma, q, n_paths, n_steps, seed=seed)
         final_prices = paths[:, -1]
 
         if option_style == 'european':

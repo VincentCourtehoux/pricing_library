@@ -49,7 +49,8 @@ class EuropeanCalculator(BaseCalculator):
             extra_params.update({
                 'n_paths': params.get('monte_carlo_paths', 10000),
                 'n_steps': params.get('monte_carlo_steps', 100),
-                'option_style': 'european'
+                'option_style': 'european',
+                'seed': params.get('seed', None)
             })
         elif method == 'binomial_tree':
             extra_params.update({

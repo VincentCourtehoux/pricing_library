@@ -49,7 +49,8 @@ class BarrierCalculator(BaseCalculator):
         if method == 'monte_carlo':
             extra_params.update({
                 'n_paths': params.get('monte_carlo_paths', 10000),
-                'n_steps': params.get('monte_carlo_steps', 100)
+                'n_steps': params.get('monte_carlo_steps', 100),
+                'seed': params.get('seed', None)
             })
         
         return extra_params
