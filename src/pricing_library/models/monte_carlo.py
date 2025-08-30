@@ -21,6 +21,11 @@ class VanillaMonteCarlo(PricingModel):
 
             if monitoring_dates is None:
                 monitored_prices = paths[:, :]
+            elif isinstance(monitoring_dates, int):
+                time_points = np.linspace(0, T, n_steps + 1)
+                monitoring_dates = np.linspace(0, T, monitoring_dates)
+                indices = [np.argmin(np.abs(time_points - t)) for t in monitoring_dates]
+                monitored_prices = paths[:, indices]
             else:
                 time_points = np.linspace(0, T, n_steps + 1)
                 indices = [np.argmin(np.abs(time_points - t)) for t in monitoring_dates]
