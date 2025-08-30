@@ -9,11 +9,11 @@ params = {
     'r': 0.05,
     'sigma': 0.2,
     'option_type': 'call',
-    'K1': 110,
-    'K2': 105,
-    'option_style': 'gap',
-    'seed': 42
+    'option_style': 'asian',   # <-- ici tu veux une asiatique
+    'seed': 42,
+    't_today': 0.2,
+    'observed_values': [102, 98],   # <-- par ex. 2 fixings connus
+    'monitoring_dates': [0.1, 0.2, 0.5, 1]  # toutes les dates
 }
-
-gap_price = service.price_option(params, 'monte_carlo')['price']
-print(f'Asian premium: {gap_price}')
+asian_price = service.price_option(params, 'monte_carlo')['price']
+print(f'Asian premium: {asian_price}')
