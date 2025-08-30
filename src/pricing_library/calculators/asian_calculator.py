@@ -43,6 +43,8 @@ class AsianCalculator(BaseCalculator):
             'option_style': 'asian',
             'averaging_type': params.get('averaging_type', 'arithmetic'),
             'monitoring_dates': params.get('monitoring_dates', None),
+            'observed_values': params.get('observed_values', None),
+            't_today': params.get('t_today', 0.0)
         }
         
         if method == 'monte_carlo':
