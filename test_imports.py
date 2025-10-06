@@ -26,20 +26,40 @@ print(f"Rho   : {greeks['rho']:.4f}")
 params = {
     "option_style": "combination",
     "combination": "strangle",
-    "S": 101,
+    "S": 100,
     "K_call": 100,
-    "K_put":100,
+    "K_put": 90,
     "T": 1,
     "r": 0.05,
     "sigma": 0.2,
 }
 
-result_price = service.price_option(params, method='black_scholes')
-
 result_greeks = service.calculate_greeks(params, method='black_scholes')
 greeks = result_greeks['greeks']
 
 print("\nStrangle Computation :")
+print(f"Price : {greeks['price']:.4f}")
+print(f"Delta : {greeks['delta']:.4f}")
+print(f"Gamma : {greeks['gamma']:.6f}")
+print(f"Vega  : {greeks['vega']:.4f}")
+print(f"Theta : {greeks['theta']:.6f}")
+print(f"Rho   : {greeks['rho']:.4f}")
+
+params = {
+    "option_style": "combination",
+    "combination": "bull_spread",
+    "S": 100,
+    "K1": 110,
+    "K2":100,
+    "T": 1,
+    "r": 0.05,
+    "sigma": 0.2,
+}
+
+result_greeks = service.calculate_greeks(params, method='black_scholes')
+greeks = result_greeks['greeks']
+
+print("\nBull Spread Computation :")
 print(f"Price : {greeks['price']:.4f}")
 print(f"Delta : {greeks['delta']:.4f}")
 print(f"Gamma : {greeks['gamma']:.6f}")
