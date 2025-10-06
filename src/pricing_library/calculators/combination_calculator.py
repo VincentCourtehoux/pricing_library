@@ -134,16 +134,23 @@ class OptionCombinationCalculator(BaseCalculator):
         base_params = self._extract_base_params(params, combination_type)
         extra_params = self._extract_extra_params(params, method)
 
-        # Calcul des greeks pour chaque leg
-        call_params = base_params.copy()
-        call_params['option_type'] = 'call'
-        put_params = base_params.copy()
-        put_params['option_type'] = 'put'
+        if combination_type == 'straddle':
+            call_params = base_params.copy()
+            call_params['option_type'] = 'call'
+            put_params = base_params.copy()
+            put_params['option_type'] = 'put'
+        elif combination_type == 'strangle':
+            call_params = base_params.copy()
+            call_params['option_type'] = 'call'
+            call_params['K'] = base_params['K_call'] 
+
+            put_params = base_params.copy()
+            put_params['option_type'] = 'put'
+            put_params['K'] = base_params['K_put']
 
         call_greeks = model.calculate_greeks(**call_params, **extra_params)
         put_greeks = model.calculate_greeks(**put_params, **extra_params)
 
-        # Combiner les greeks en une seule dict pour la combinaison
         combined_greeks = {
             'price': call_greeks['price'] + put_greeks['price'],
             'delta': call_greeks['delta'] + put_greeks['delta'],
