@@ -1,4 +1,11 @@
-from ..calculators import EuropeanCalculator, AsianCalculator, AmericanCalculator, GapCalculator, BarrierCalculator
+from pricing_library.calculators import (
+    EuropeanCalculator,
+    AsianCalculator,
+    AmericanCalculator,
+    GapCalculator,
+    BarrierCalculator,
+    OptionCombinationCalculator
+)
 from .exceptions import UnsupportedOptionTypeError
 
 class PricingService:
@@ -8,7 +15,8 @@ class PricingService:
             'asian': AsianCalculator(),
             'american': AmericanCalculator(),
             'gap': GapCalculator(),
-            'barrier': BarrierCalculator()
+            'barrier': BarrierCalculator(),
+            'combination': OptionCombinationCalculator()
         }
 
     def price_option(self, params, method=None):
