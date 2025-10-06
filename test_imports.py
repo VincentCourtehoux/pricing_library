@@ -1,19 +1,28 @@
 from pricing_library.core.pricing_service import PricingService
-import numpy as np
+
 service = PricingService()
 
 params = {
-    'S': 100,
-    'K': 100,
-    'T': 1,
-    'r': 0.05,
-    'sigma': 0.2,
-    'option_type': 'call',
-    'option_style': 'asian',   # <-- ici tu veux une asiatique
-    'seed': 42,
-    't_today': 0.2,
-    'observed_values': [102, 98],   # <-- par ex. 2 fixings connus
-    'monitoring_dates': [0.1, 0.2, 0.5, 1]  # toutes les dates
+    "option_style": "combination",
+    "combination": "straddle",
+    "S": 101,
+    "K": 100,
+    "T": 1,
+    "r": 0.05,
+    "sigma": 0.2,
+    'method': 'black_scholes'
 }
-asian_price = service.price_option(params, 'monte_carlo')['price']
-print(f'Asian premium: {asian_price}')
+
+result_price = service.price_option(params)
+print("Prix du straddle :", result_price['price'])
+
+result_greeks = service.calculate_greeks(params)
+greeks = result_greeks['greeks']
+
+print("\nGreeks combinés du straddle :")
+print(f"Price : {greeks['price']:.4f}")
+print(f"Delta : {greeks['delta']:.4f}")
+print(f"Gamma : {greeks['gamma']:.6f}")
+print(f"Vega  : {greeks['vega']:.4f}")
+print(f"Theta : {greeks['theta']:.6f}")
+print(f"Rho   : {greeks['rho']:.4f}")
