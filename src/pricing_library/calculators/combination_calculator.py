@@ -1,8 +1,8 @@
+import numpy as np
 from ..models.black_scholes import BlackScholesModel
 from ..models.monte_carlo import VanillaMonteCarlo
 from ..models.binomial import BinomialModel
 from .base_calculator import BaseCalculator
-
 
 class OptionCombinationCalculator(BaseCalculator):
     def __init__(self, models=None):
@@ -12,11 +12,7 @@ class OptionCombinationCalculator(BaseCalculator):
             'binomial_tree': BinomialModel()
         }
 
-        self._combination_methods = {
-            'straddle': self._calculate_straddle,
-            'strangle': self._calculate_strangle,
-            'bull_spread': self._calculate_bull_spread
-        }
+        self._combination_methods = ['straddle', 'strangle', 'bull_spread', 'bear_spread']
 
     def calculate(self, params, method='black_scholes'):
         if method not in self.models:
@@ -25,116 +21,151 @@ class OptionCombinationCalculator(BaseCalculator):
         combination_type = params.get('combination')
         if combination_type not in self._combination_methods:
             raise ValueError(
-                f"Unsupported combination type: {combination_type}. "
-                f"Supported: {list(self._combination_methods.keys())}"
+                f"Unsupported combination type: {combination_type}. Supported: {self._combination_methods}"
             )
 
-        return self._combination_methods[combination_type](params, method)
-
-    def _calculate_straddle(self, params, method):
         model = self.models[method]
-        base_params = self._extract_base_params(params, 'straddle')
+        base_params = self._extract_base_params(params, combination_type)
         extra_params = self._extract_extra_params(params, method)
 
-        call_params = base_params.copy()
-        call_params['option_type'] = 'call'
-        put_params = base_params.copy()
-        put_params['option_type'] = 'put'
+        if combination_type in ['straddle', 'strangle']:
+            call_params = base_params.copy()
+            call_params['option_type'] = np.full_like(base_params['S'], 'call', dtype=object)
+            if combination_type == 'strangle':
+                call_params['K'] = base_params['K_call']
 
-        call_price = model.calculate(**call_params, **extra_params)['price']
-        put_price = model.calculate(**put_params, **extra_params)['price']
+            put_params = base_params.copy()
+            put_params['option_type'] = np.full_like(base_params['S'], 'put', dtype=object)
+            if combination_type == 'strangle':
+                put_params['K'] = base_params['K_put']
+
+            call_price = model.calculate(**call_params, **extra_params)['price']
+            put_price = model.calculate(**put_params, **extra_params)['price']
+            total_price = call_price + put_price
+
+            legs = [
+                {'type': 'call', 'price': call_price, 'K': call_params.get('K', base_params.get('K'))},
+                {'type': 'put', 'price': put_price, 'K': put_params.get('K', base_params.get('K'))}
+            ]
+
+        elif combination_type in ['bull_spread', 'bear_spread']:
+            n = len(base_params['S'])
+            long_params = base_params.copy()
+            short_params = base_params.copy()
+
+            if combination_type == 'bull_spread':
+                long_params['option_type'] = np.full(n, 'call', dtype=object)
+                short_params['option_type'] = np.full(n, 'call', dtype=object)
+                long_params['K'] = base_params['K1']
+                short_params['K'] = base_params['K2']
+            else:  # bear_spread
+                long_params['option_type'] = np.full(n, 'put', dtype=object)
+                short_params['option_type'] = np.full(n, 'put', dtype=object)
+                long_params['K'] = base_params['K2']
+                short_params['K'] = base_params['K1']
+
+            long_price = model.calculate(**long_params, **extra_params)['price']
+            short_price = model.calculate(**short_params, **extra_params)['price']
+            total_price = long_price - short_price
+
+            legs = [
+                {'type': long_params['option_type'][0], 'price': long_price, 'K': long_params['K']},
+                {'type': short_params['option_type'][0], 'price': short_price, 'K': short_params['K']}
+            ]
 
         return {
-            'price': call_price + put_price,
-            'legs': [
-                {'type': 'call', 'price': call_price, 'K': base_params['K']},
-                {'type': 'put', 'price': put_price, 'K': base_params['K']}
-            ],
+            'price': total_price,
+            'legs': legs,
             'method': method,
-            'option_style': 'straddle'
+            'option_style': combination_type
         }
 
-    def _calculate_strangle(self, params, method):
+    def calculate_greeks(self, params, method='black_scholes'):
+        if method not in self.models:
+            raise ValueError(f'Unsupported method: {method}')
+
+        combination_type = params.get('combination')
+        if combination_type not in self._combination_methods:
+            raise ValueError(
+                f"Unsupported combination type: {combination_type}. Supported: {self._combination_methods}"
+            )
+
         model = self.models[method]
-        base_params = self._extract_base_params(params, 'strangle')
+        base_params = self._extract_base_params(params, combination_type)
         extra_params = self._extract_extra_params(params, method)
 
-        call_params = base_params.copy()
-        call_params['option_type'] = 'call'
-        call_params['K'] = base_params['K_call']
-        put_params = base_params.copy()
-        put_params['option_type'] = 'put'
-        put_params['K'] = base_params['K_put']
+        # --- Vectorized greeks calculation ---
+        def compute_combined(long_params, short_params=None, subtract=False):
+            long_greeks = model.calculate_greeks(**long_params, **extra_params)
+            if short_params is not None:
+                short_greeks = model.calculate_greeks(**short_params, **extra_params)
+                combined = {k: long_greeks[k] - short_greeks[k] if subtract else long_greeks[k] + short_greeks[k]
+                            for k in long_greeks}
+            else:
+                combined = long_greeks
+            return combined
 
-        call_price = model.calculate(**call_params, **extra_params)['price']
-        put_price = model.calculate(**put_params, **extra_params)['price']
+        if combination_type in ['straddle', 'strangle']:
+            call_params = base_params.copy()
+            call_params['option_type'] = np.full_like(base_params['S'], 'call', dtype=object)
+            if combination_type == 'strangle':
+                call_params['K'] = base_params['K_call']
+
+            put_params = base_params.copy()
+            put_params['option_type'] = np.full_like(base_params['S'], 'put', dtype=object)
+            if combination_type == 'strangle':
+                put_params['K'] = base_params['K_put']
+
+            combined_greeks = compute_combined(call_params, put_params)
+
+        elif combination_type in ['bull_spread', 'bear_spread']:
+            n = len(base_params['S'])
+            long_params = base_params.copy()
+            short_params = base_params.copy()
+
+            if combination_type == 'bull_spread':
+                long_params['option_type'] = np.full(n, 'call', dtype=object)
+                short_params['option_type'] = np.full(n, 'call', dtype=object)
+                long_params['K'] = base_params['K1']
+                short_params['K'] = base_params['K2']
+            else:
+                long_params['option_type'] = np.full(n, 'put', dtype=object)
+                short_params['option_type'] = np.full(n, 'put', dtype=object)
+                long_params['K'] = base_params['K2']
+                short_params['K'] = base_params['K1']
+
+            combined_greeks = compute_combined(long_params, short_params, subtract=True)
 
         return {
-            'price': call_price + put_price,
-            'legs': [
-                {'type': 'call', 'price': call_price, 'K': base_params['K_call']},
-                {'type': 'put', 'price': put_price, 'K': base_params['K_put']}
-            ],
+            'option_style': combination_type,
             'method': method,
-            'option_style': 'strangle'
-        }
-
-    def _calculate_bull_spread(self, params, method):
-        model = self.models[method]
-        base_params = self._extract_base_params(params, 'bull_spread')
-        extra_params = self._extract_extra_params(params, method)
-
-        long_params = base_params.copy()
-        long_params['option_type'] = 'call'
-        long_params['K'] = base_params['K1']
-        short_params = base_params.copy()
-        short_params['option_type'] = 'call'
-        short_params['K'] = base_params['K2']
-
-        long_price = model.calculate(**long_params, **extra_params)['price']
-        short_price = model.calculate(**short_params, **extra_params)['price']
-
-        return {
-            'price': long_price - short_price,
-            'legs': [
-                {'type': 'call', 'price': long_price, 'K': base_params['K1']},
-                {'type': 'call', 'price': short_price, 'K': base_params['K2']}
-            ],
-            'method': method,
-            'option_style': 'bull_spread'
+            'greeks': combined_greeks
         }
 
     def _extract_base_params(self, params, combination_type=None):
         base = {
-            'S': params['S'],
-            'T': params['T'],
-            'r': params['r'],
-            'sigma': params['sigma'],
-            'q': params.get('q', 0)
+            'S': np.atleast_1d(params['S']),
+            'T': np.atleast_1d(params['T']),
+            'r': np.atleast_1d(params['r']),
+            'sigma': np.atleast_1d(params['sigma']),
+            'q': np.atleast_1d(params.get('q', 0))
         }
 
         if combination_type == 'straddle':
-            if 'K' not in params:
-                raise ValueError("Parameter 'K' is required for straddle")
-            base['K'] = params['K']
+            base['K'] = np.atleast_1d(params['K'])
         elif combination_type == 'strangle':
-            if 'K_call' not in params or 'K_put' not in params:
-                raise ValueError("Parameters 'K_call' and 'K_put' are required for strangle")
-            base['K_call'] = params['K_call']
-            base['K_put'] = params['K_put']
-        elif combination_type == 'bull_spread':
-            if 'K1' not in params or 'K2' not in params:
-                raise ValueError("Parameters 'K1' and 'K2' are required for strangle")
-            base['K1'] = params['K1']
-            base['K2'] = params['K2']
+            base['K_call'] = np.atleast_1d(params['K_call'])
+            base['K_put'] = np.atleast_1d(params['K_put'])
+        elif combination_type in ['bull_spread', 'bear_spread']:
+            base['K1'] = np.atleast_1d(params['K1'])
+            base['K2'] = np.atleast_1d(params['K2'])
         else:
-            base['K'] = params.get('K')
+            base['K'] = np.atleast_1d(params.get('K'))
 
         return base
 
     def _extract_extra_params(self, params, method):
         extra_params = {}
-
         if method == 'monte_carlo':
             extra_params.update({
                 'n_paths': params.get('monte_carlo_paths', 10000),
@@ -147,85 +178,4 @@ class OptionCombinationCalculator(BaseCalculator):
                 'n_steps': params.get('binomial_steps', 100),
                 'option_style': 'european'
             })
-
         return extra_params
-
-    def calculate_greeks(self, params, method='black_scholes'):
-        if method not in self.models:
-            raise ValueError(f'Unsupported method: {method}')
-
-        combination_type = params.get('combination')
-        if combination_type not in self._combination_methods:
-            raise ValueError(
-                f"Unsupported combination type: {combination_type}. "
-                f"Supported: {list(self._combination_methods.keys())}"
-            )
-
-        model = self.models[method]
-        base_params = self._extract_base_params(params, combination_type)
-        extra_params = self._extract_extra_params(params, method)
-
-        if combination_type == 'straddle':
-            call_params = base_params.copy()
-            call_params['option_type'] = 'call'
-            put_params = base_params.copy()
-            put_params['option_type'] = 'put'
-
-            call_greeks = model.calculate_greeks(**call_params, **extra_params)
-            put_greeks = model.calculate_greeks(**put_params, **extra_params)
-
-            combined_greeks = {
-                'price': call_greeks['price'] + put_greeks['price'],
-                'delta': call_greeks['delta'] + put_greeks['delta'],
-                'gamma': call_greeks['gamma'] + put_greeks['gamma'],
-                'vega': call_greeks['vega'] + put_greeks['vega'],
-                'theta': call_greeks['theta'] + put_greeks['theta'],
-                'rho': call_greeks['rho'] + put_greeks['rho']
-            }
-        elif combination_type == 'strangle':
-            call_params = base_params.copy()
-            call_params['option_type'] = 'call'
-            call_params['K'] = base_params['K_call'] 
-
-            put_params = base_params.copy()
-            put_params['option_type'] = 'put'
-            put_params['K'] = base_params['K_put']
-
-            call_greeks = model.calculate_greeks(**call_params, **extra_params)
-            put_greeks = model.calculate_greeks(**put_params, **extra_params)
-
-            combined_greeks = {
-                'price': call_greeks['price'] + put_greeks['price'],
-                'delta': call_greeks['delta'] + put_greeks['delta'],
-                'gamma': call_greeks['gamma'] + put_greeks['gamma'],
-                'vega': call_greeks['vega'] + put_greeks['vega'],
-                'theta': call_greeks['theta'] + put_greeks['theta'],
-                'rho': call_greeks['rho'] + put_greeks['rho']
-            }
-        
-        elif combination_type == 'bull_spread':
-            long_params = base_params.copy()
-            long_params['option_type'] = 'call'
-            long_params['K'] = base_params['K1'] 
-
-            short_params = base_params.copy()
-            short_params['option_type'] = 'call'
-            short_params['K'] = base_params['K2']
-
-            long_greeks = model.calculate_greeks(**long_params, **extra_params)
-            short_greeks = model.calculate_greeks(**short_params, **extra_params)
-
-            combined_greeks = {
-                'price': long_greeks['price'] - short_greeks['price'],
-                'delta': long_greeks['delta'] - short_greeks['delta'],
-                'gamma': long_greeks['gamma'] - short_greeks['gamma'],
-                'vega': long_greeks['vega'] - short_greeks['vega'],
-                'theta': long_greeks['theta'] - short_greeks['theta'],
-                'rho': long_greeks['rho'] - short_greeks['rho']
-            }
-
-        return {
-            'option_style': combination_type,
-            'method': method,
-            'greeks': combined_greeks
-        }
