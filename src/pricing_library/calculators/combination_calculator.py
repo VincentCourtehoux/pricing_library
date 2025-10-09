@@ -58,7 +58,7 @@ class OptionCombinationCalculator(BaseCalculator):
                 short_params['option_type'] = np.full(n, 'call', dtype=object)
                 long_params['K'] = base_params['K1']
                 short_params['K'] = base_params['K2']
-            else:  # bear_spread
+            else:  
                 long_params['option_type'] = np.full(n, 'put', dtype=object)
                 short_params['option_type'] = np.full(n, 'put', dtype=object)
                 long_params['K'] = base_params['K2']
@@ -94,16 +94,17 @@ class OptionCombinationCalculator(BaseCalculator):
         base_params = self._extract_base_params(params, combination_type)
         extra_params = self._extract_extra_params(params, method)
 
-        # --- Vectorized greeks calculation ---
         def compute_combined(long_params, short_params=None, subtract=False):
             long_greeks = model.calculate_greeks(**long_params, **extra_params)
             if short_params is not None:
                 short_greeks = model.calculate_greeks(**short_params, **extra_params)
-                combined = {k: long_greeks[k] - short_greeks[k] if subtract else long_greeks[k] + short_greeks[k]
-                            for k in long_greeks}
+                combined_greeks = {k: long_greeks[k] - short_greeks[k] if subtract else long_greeks[k] + short_greeks[k]
+                                for k in long_greeks}
+                combined_price = long_greeks['price'] - short_greeks['price'] if subtract else long_greeks['price'] + short_greeks['price']
             else:
-                combined = long_greeks
-            return combined
+                combined_greeks = long_greeks
+                combined_price = long_greeks['price']
+            return combined_price, combined_greeks
 
         if combination_type in ['straddle', 'strangle']:
             call_params = base_params.copy()
@@ -116,7 +117,7 @@ class OptionCombinationCalculator(BaseCalculator):
             if combination_type == 'strangle':
                 put_params['K'] = base_params['K_put']
 
-            combined_greeks = compute_combined(call_params, put_params)
+            total_price, combined_greeks = compute_combined(call_params, put_params)
 
         elif combination_type in ['bull_spread', 'bear_spread']:
             n = len(base_params['S'])
@@ -134,13 +135,15 @@ class OptionCombinationCalculator(BaseCalculator):
                 long_params['K'] = base_params['K2']
                 short_params['K'] = base_params['K1']
 
-            combined_greeks = compute_combined(long_params, short_params, subtract=True)
+            total_price, combined_greeks = compute_combined(long_params, short_params, subtract=True)
 
         return {
             'option_style': combination_type,
             'method': method,
+            'price': total_price,
             'greeks': combined_greeks
         }
+
 
     def _extract_base_params(self, params, combination_type=None):
         base = {
