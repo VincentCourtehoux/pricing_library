@@ -4,8 +4,7 @@
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)  
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)   
 
-A Python library for pricing vanilla and exotic options,  
-with flexible market parameters and advanced numerical methods.
+A Python library for pricing vanilla and exotic options, with flexible market parameters and advanced numerical methods.
 
 
 ## Table of Contents
